@@ -1,4 +1,4 @@
-# Project Name
+# Backend API
 
 > {Write brief project description or tagline here.}
 
@@ -11,22 +11,24 @@ This repository hosts the codebase for our CAPSTONE project. The project is inte
 - **Frontend Repository:** [Frontend Repository Name](https://github.com/Team-Clubroom/front-end)
 - **Backend Repository:** [Backend Repository Name](https://github.com/Team-Clubroom/backend-api)
 
-## Getting Started with Frontend
+## Virtual environment
+This application uses a python virtual environment to manage dependencies. The environment was created using the following command:
+```python -m venv .venv```
 
-To get started with the frontend of the project, follow these steps:
 
-1. Clone the frontend repository:
-   ```bash
-   git clone link-to-frontend-repo
-   cd frontend-directory
-2. Install dependencies:
-   ```bash
-   npm install
-3. Run the application in development mode:
-   ```bash
-   npm run dev
-The frontend of the project should now be running locally.
-
+## Running the flask application
+Execute the following command in the root directory
+### 1) Start virtual environment on Windows:
+```.\.venv\Scripts\activate```
+### 2) Install the dependencies
+```pip install -r requirements.txt```
+### 3) Set the environment variables
+In order for the Flask to detect the application entry, set the following environment variable in your Operating System
+#### On Windows:
+Run the following
+``$env:FLASK_APP = "application.py"``
+#### On macOS:
+Run the following: ``export FLASK_APP = "application.py"``
 ## Team Members and Roles
 * Mohamed Albeik: Full Stack DevOps
 * Brandon Huckaby: Backend Dev/Architect
