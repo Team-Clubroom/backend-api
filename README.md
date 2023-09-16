@@ -14,7 +14,11 @@ This repository hosts the codebase for our CAPSTONE project. The project is inte
 ## Virtual environment
 This application uses a python virtual environment to manage dependencies. The environment was created using the following command:
 ```python -m venv .venv```
+## Installing new dependencies
 
+After installing a dependency, we should regenerate the requirements.txt file
+
+``pip freeze > requirements.txt``
 
 ## Running the flask application
 Execute the following command in the root directory
