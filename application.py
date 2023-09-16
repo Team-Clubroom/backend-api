@@ -3,6 +3,7 @@ from flask import Flask, request, jsonify
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
+import requests
 
 application = Flask(__name__);
 application.config['SECRET_KEY'] = "dkoiuf121nd91akd9n234m2n3j3dlser123"
@@ -10,12 +11,7 @@ application.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:myrootpass
 jwt = JWTManager(application)
 
 db = SQLAlchemy(application)
-# db.init_app(application)
 bcrypt = Bcrypt(application)
-
-
-# login_manager = LoginManager(application)
-# login_manager.login_view = 'login'
 
 
 class Employer(db.Model):
@@ -28,6 +24,7 @@ class Employer(db.Model):
     employer_status = db.Column(db.String(255))
     employer_legal_status = db.Column(db.String(255))
 
+
 class User(db.Model):
     __tablename__ = 'users'
 
@@ -35,6 +32,33 @@ class User(db.Model):
     email_address = db.Column(db.String(255))
     password = db.Column(db.String(255))
     access_permissions = db.Column(db.Integer)
+
+
+def send_verification_email(email, token):
+    # Define the data you want to send in the request
+    data = {
+        'email': email,
+        'token': token
+    }
+
+    try:
+        # Send the POST request with the form data
+        google_script_url = "https://script.google.com/macros/s/AKfycbwzuWurwJpmj1pMI93JGgp1JfPyLNlFiUdR6j34tWsQXQHTE-OvHBcxqhw3Am1qWBg9Dg/exec"
+        response = requests.post(google_script_url, data=data)
+
+        # Check the response status code
+        if response.status_code == 200:
+            return jsonify({
+                "message": "Verification email sent successfully"
+            }), 200
+        else:
+            return jsonify({
+                "message": "Failed to send email"
+            }), response.status_code
+    except requests.exceptions.RequestException as e:
+        return jsonify({
+            "message": "Something went wrong sending the email"
+        }), 500
 
 
 @application.route('/')
@@ -65,8 +89,8 @@ def register_user():
             return jsonify({
                 "error": "Required arguments missing"
             }), 400
-        emailinfo = validate_email(email, check_deliverability=False)
-        email = emailinfo.normalized
+        email_info = validate_email(email, check_deliverability=False)
+        email = email_info.normalized
 
         # TODO: Exception for user already registered
 
@@ -78,13 +102,7 @@ def register_user():
         db.session.add(user)
         db.session.commit()
 
-        # TODO: Send verification email here
-
-        success_response = {
-            'message': 'Verification email sent'
-        }
-
-        return jsonify(success_response), 201
+        return send_verification_email(email, "very secret stuff be careful")
 
     except EmailNotValidError as e:
         error_response = {
