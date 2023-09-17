@@ -11,6 +11,7 @@ flask-sqlalchemy = "*"
 flask-bcrypt = "*"
 requests = "*"
 pymysql = "*"
+python-dotenv = "*"
 
 [dev-packages]
 

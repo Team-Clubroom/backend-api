@@ -3,11 +3,31 @@ from flask import Flask, request, jsonify
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
+from os import environ
+from dotenv import load_dotenv
 import requests
 
-application = Flask(__name__)
-application.config['SECRET_KEY'] = "dkoiuf121nd91akd9n234m2n3j3dlser123"
-application.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:myrootpassword@127.0.0.1:3306/backend_test'
+# load environment variables from .env file
+load_dotenv(".env")
+GMAIL_API_URL = environ.get('GMAIL_API_URL')
+
+
+def init_application():
+    app = Flask(__name__)
+    # TODO: ensure that env variables are defined
+    db_user = environ.get('DB_USER')
+    db_name = environ.get('DB_NAME')
+    db_password = environ.get('DB_PASSWORD')
+    db_host = environ.get('DB_HOST')
+    db_port = environ.get('DB_PORT')
+    app.config[
+        'SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}'
+    secret_key = environ.get('SECRET_KEY')
+    app.config['SECRET_KEY'] = secret_key
+    return app
+
+
+application = init_application()
 jwt = JWTManager(application)
 
 db = SQLAlchemy(application)
@@ -43,8 +63,12 @@ def send_verification_email(email, token):
 
     try:
         # Send the POST request with the form data
-        google_script_url = "https://script.google.com/macros/s/AKfycbwzuWurwJpmj1pMI93JGgp1JfPyLNlFiUdR6j34tWsQXQHTE-OvHBcxqhw3Am1qWBg9Dg/exec"
-        response = requests.post(google_script_url, data=data)
+        if not GMAIL_API_URL:
+            return jsonify({
+                "message": "Internal server error"
+            }), 500
+
+        response = requests.post(GMAIL_API_URL, data=data)
 
         # Check the response status code
         if response.status_code == 200:
