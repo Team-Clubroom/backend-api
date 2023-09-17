@@ -5,7 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 import requests
 
-application = Flask(__name__);
+application = Flask(__name__)
 application.config['SECRET_KEY'] = "dkoiuf121nd91akd9n234m2n3j3dlser123"
 application.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:myrootpassword@127.0.0.1:3306/backend_test'
 jwt = JWTManager(application)
