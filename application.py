@@ -78,22 +78,39 @@ def hello_world_private():
     return "Hello world privately :)"
 
 
+@application.route('/verify', methods=['GET'])
+@jwt_required(locations=['query_string'])
+def verify_user_account():
+    try:
+        email = get_jwt_identity()
+        return f"Email {email} verified successfully"
+
+    except RuntimeError:
+        return jsonify({"error": "Internal server error"}), 500
+
+
 @application.route('/register', methods=['POST'])
 def register_user():
     try:
         data = request.json
         email = data.get("email", None)
         password = data.get("password", None)
+        name = data.get("name", None)
 
-        if not email or not password:
+        if not email or not password or not name:
             return jsonify({
                 "error": "Required arguments missing"
             }), 400
         email_info = validate_email(email, check_deliverability=False)
         email = email_info.normalized
 
-        # TODO: Exception for user already registered
+        api_url = environ.get("API_URL")
+        if not api_url:
+            return jsonify({"error": "Internal server error"}), 500
 
+        verification_url = f"{api_url}/verify?jwt={create_access_token(email)}"
+
+        # TODO: Exception for user already registered
         user = User()
         user.email_address = email
         user.password = password
@@ -102,7 +119,7 @@ def register_user():
         db.session.add(user)
         db.session.commit()
 
-        return send_verification_email(email, "very secret stuff be careful")
+        return send_verification_email(email, verification_url)
 
     except EmailNotValidError as e:
         error_response = {
