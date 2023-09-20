@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+email-validator = "*"
+flask = "*"
+flask-jwt-extended = "*"
+flask-sqlalchemy = "*"
+flask-bcrypt = "*"
+requests = "*"
+pymysql = "*"
+python-dotenv = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.11"
