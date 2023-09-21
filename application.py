@@ -174,15 +174,20 @@ def login_user():
     try:
         # Get data from the JSON request
         data = request.json
-
         # Extract email, password, and userRole from the request
         email = data['email']
         password = data['password']
 
-        if email != password:
+        user = User.query.filter_by(email_address=email).first()
+        if not user:
             return jsonify({
-                'error': 'Password or email are incorrect'
-            }), 400
+                "error": "Account doesn't exist. Please create an account first"
+            }), 401
+        # TODO: encrypt the given password to compare against db value
+        if user.password != password:
+            return jsonify({
+                "error": "Invalid user name or password"
+            }), 401
 
         # create token
         token = create_access_token(identity=email)
@@ -190,7 +195,7 @@ def login_user():
         # Assuming registration is successful, you can send a success response
         response = {
             'message': 'Login successful',
-            'token': token
+            'jwt': token
         }
         return jsonify(response), 201  # 201 Created status code
 
