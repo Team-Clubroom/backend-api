@@ -6,6 +6,7 @@ from flask_bcrypt import Bcrypt
 from os import environ
 from dotenv import load_dotenv
 import requests
+from sqlalchemy.exc import NoResultFound
 
 # load environment variables from .env file
 load_dotenv(".env")
@@ -107,7 +108,17 @@ def hello_world_private():
 def verify_user_account():
     try:
         email = get_jwt_identity()
-        return f"Email {email} verified successfully"
+        user = User.query.filter_by(email_address=email).first()
+        user.access_permissions = 1
+        db.session.commit()
+
+        # TODO: return an HTML view here
+        return f"<div>" \
+               f"<h1>Email {email} has been successfully verified</h1>" \
+               f"<p>You can now login to your CELDV account</p>" \
+               f"</div>"
+    except NoResultFound:
+        return jsonify({"error": "Could not verify email. Try registering first"}), 400
 
     except RuntimeError:
         return jsonify({"error": "Internal server error"}), 500
