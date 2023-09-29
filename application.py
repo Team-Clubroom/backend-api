@@ -86,15 +86,15 @@ def send_verification_email(email, token):
         }), 500
 
 
-@application.route('/')
-def hello_world():
+@application.route('/employers')
+@jwt_required()
+def get_all_employers():
     # Execute the SQL query
     employers = Employer.query.all()
 
     # Convert results to list of dictionaries
     results = [{"id": e.employer_id, "name": e.employer_name} for e in employers]
     return jsonify(results)
-    # return "Hello world :)"
 
 
 @application.route('/hello-private')
@@ -182,12 +182,12 @@ def login_user():
         if not user:
             return jsonify({
                 "error": "Account doesn't exist. Please create an account first"
-            }), 401
+            }), 400
         # TODO: encrypt the given password to compare against db value
         if user.password != password:
             return jsonify({
                 "error": "Invalid user name or password"
-            }), 401
+            }), 400
 
         # create token
         token = create_access_token(identity=email)
@@ -195,7 +195,9 @@ def login_user():
         # Assuming registration is successful, you can send a success response
         response = {
             'message': 'Login successful',
-            'jwt': token
+            'data': {
+                'jwt': token
+            }
         }
         return jsonify(response), 201  # 201 Created status code
 
