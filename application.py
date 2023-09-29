@@ -143,11 +143,13 @@ def register_user():
         if not api_url:
             return jsonify({"error": "Internal server error"}), 500
 
+        # TODO: Set expiration date on verification token
         verification_url = f"{api_url}/verify?jwt={create_access_token(email)}"
 
         # TODO: Exception for user already registered
         user = User()
         user.email_address = email
+        # TODO: Encrypt the given user password before storing it in database
         user.password = password
         user.access_permissions = None
 
@@ -183,13 +185,15 @@ def login_user():
             return jsonify({
                 "error": "Account doesn't exist. Please create an account first"
             }), 400
-        # TODO: encrypt the given password to compare against db value
+        # TODO: Don't allow login for unverified accounts
+        # TODO: Decrypt the db password before comparing it against user provided password when logging in
         if user.password != password:
             return jsonify({
                 "error": "Invalid user name or password"
             }), 400
 
         # create token
+        # TODO: Set expiration date on LOGIN token
         token = create_access_token(identity=email)
 
         # Assuming registration is successful, you can send a success response
