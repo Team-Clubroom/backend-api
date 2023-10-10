@@ -12,27 +12,20 @@ This repository hosts the codebase for our CAPSTONE project. The project is inte
 - **Backend Repository:** [Backend Repository Name](https://github.com/Team-Clubroom/backend-api)
 
 ## Virtual environment
-This application uses a python virtual environment to manage dependencies. The environment was created using the following command:
-```python -m venv .venv```
-## Installing new dependencies
+This application uses a python virtual environment to manage dependencies. The environment is managed through the `pipenv` package. You can install it using the following documentation
+[pipenv installation](https://pipenv.pypa.io/en/latest/installation)
 
-After installing a dependency, we should regenerate the requirements.txt file
-
-``pip freeze > requirements.txt``
 
 ## Running the flask application
 Execute the following command in the root directory
-### 1) Start virtual environment on Windows:
-```.\.venv\Scripts\activate```
-### 2) Install the dependencies
-```pip install -r requirements.txt```
-### 3) Set the environment variables
-In order for the Flask to detect the application entry, set the following environment variable in your Operating System
-#### On Windows:
-Run the following
-``$env:FLASK_APP = "application.py"``
-#### On macOS:
-Run the following: ``export FLASK_APP = "application.py"``
+1. Activate the virtual environment:
+```pipenv shell```
+2. Install the dependencies
+```pipenv install```
+3. Start MySQL WorkBench and launch instance
+4. Ensure you have the required environment variables in the `.env` file (DON'T commit this file to GitHub)
+5. Start flask server
+```flask run```
 ## Team Members and Roles
 * Mohamed Albeik: Full Stack DevOps
 * Brandon Huckaby: Backend Dev/Architect
