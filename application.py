@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from email_validator import validate_email, EmailNotValidError
 from flask import Flask, request, jsonify
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager
@@ -35,23 +36,60 @@ db = SQLAlchemy(application)
 bcrypt = Bcrypt(application)
 
 
+class Employee(db.Model):
+    __tablename__ = 'employees'
+
+    employee_id = db.Column(db.Integer, primary_key=True)
+    employee_first_name = db.Column(db.String(255))
+    employee_middle_name = db.Column(db.String(255))
+    employee_last_name = db.Column(db.String(255))
+
+
+class EmployerRelation(db.Model):
+    __tablename__ = 'employer_relations'
+
+    employer_relation_id = db.Column(db.Integer, primary_key=True)
+    parent_employer_id = db.Column(db.Integer)
+    child_employer_id = db.Column(db.Integer)
+    employer_relation_type = db.Column(db.String(255))
+    employer_relation_start_date = db.Column(db.String(10))
+    employer_relation_end_date = db.Column(db.String(10))
+
+
 class Employer(db.Model):
     __tablename__ = 'employers'
 
     employer_id = db.Column(db.Integer, primary_key=True)
     employer_name = db.Column(db.String(255))
+    employer_previous_name = db.Column(db.String(255))
     employer_founded_date = db.Column(db.String(10))
     employer_dissolved_date = db.Column(db.String(10))
+    employer_bankruptcy_date = db.Column(db.String(10))
     employer_status = db.Column(db.String(255))
     employer_legal_status = db.Column(db.String(255))
+    employer_name_change_reason = db.Column(db.String(255))
+
+
+class Employment(db.Model):
+    __tablename__ = 'employments'
+
+    employment_id = db.Column(db.Integer, primary_key=True)
+    employee_id = db.Column(db.Integer)
+    employer_id = db.Column(db.Integer)
+    job_title = db.Column(db.String(255))
+    start_date = db.Column(db.String(10))
+    end_date = db.Column(db.String(10))
 
 
 class User(db.Model):
     __tablename__ = 'users'
 
     user_id = db.Column(db.Integer, primary_key=True)
-    email_address = db.Column(db.String(255))
+    user_first_name = db.Column(db.String(255))
+    user_last_name = db.Column(db.String(255))
+    email_address = db.Column(db.String(255), unique=True)
     password = db.Column(db.String(255))
+    pending_registr_expiry_datetime = db.Column(db.DateTime)
     access_permissions = db.Column(db.Integer)
 
 
@@ -63,7 +101,7 @@ def send_verification_email(email, first_name):
 
     # TODO: Set expiration date on verification token
     verification_url = f"{api_url}/verify?jwt={create_access_token(email)}"
-    
+
     # Define the data you want to send in the request
     data = {
         'email': email,
@@ -78,8 +116,6 @@ def send_verification_email(email, first_name):
             return jsonify({
                 "message": "Internal server error"
             }), 500
-            
-        print(GMAIL_API_URL)
 
         response = requests.post(GMAIL_API_URL, data=data)
 
@@ -140,19 +176,42 @@ def verify_user_account():
 def register_user():
     try:
         data = request.json
+        user_first_name = data.get("user_first_name", None)
+        user_last_name = data.get("user_last_name", None)
         email = data.get("email", None)
         password = data.get("password", None)
-        name = data.get("name", None)
 
-        if not email or not password or not name:
+        if not email or not password or not user_first_name or not user_last_name:
             return jsonify({
                 "error": "Required arguments missing"
             }), 400
         email_info = validate_email(email, check_deliverability=False)
         email = email_info.normalized
 
-        # TODO: Exception for user already registered
+        # Check if registration email already exists in backend_test.users
+        existing_user = User.query.filter_by(email_address=email).first()
+
+        if existing_user:
+            # CASE 1: Record with matching email exists and user is not verified (i.e., access_permissions is Null)
+            if existing_user.access_permissions is None:
+                # Resend verification email with updated token
+                send_verification_email(email, user_first_name)
+
+                # Update the pending_registr_expiry_datetime to current datetime + 72 hours
+                # NOTE: Bad practice to use local time.
+                # TODO: Update all timestamping functionality to use UTC time
+                existing_user.pending_registr_expiry_datetime = datetime.now() + timedelta(days=3)
+
+                db.session.commit()
+
+                return jsonify({"message": "Verification email resent!"}), 200
+
+            # CASE 2: Record with matching email exists and user is already verified
+            return jsonify({"error": "Email is already registered to a verified account"}), 400
+
         user = User()
+        user.user_first_name = user_first_name
+        user.user_last_name = user_last_name
         user.email_address = email
         # TODO: Encrypt the given user password before storing it in database
         user.password = password
@@ -161,7 +220,7 @@ def register_user():
         db.session.add(user)
         db.session.commit()
 
-        return send_verification_email(email, name)
+        return send_verification_email(email, user_first_name)
 
     except EmailNotValidError as e:
         error_response = {
