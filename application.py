@@ -93,11 +93,21 @@ class User(db.Model):
     access_permissions = db.Column(db.Integer)
 
 
-def send_verification_email(email, token):
+def send_verification_email(email, first_name):
+    api_url = environ.get("API_URL")
+    email_admin_token = environ.get("EMAIL_ADMIN_TOKEN")
+    if not api_url or not email_admin_token:
+        return jsonify({"error": "Internal server error"}), 500
+
+    # TODO: Set expiration date on verification token
+    verification_url = f"{api_url}/verify?jwt={create_access_token(email)}"
+
     # Define the data you want to send in the request
     data = {
         'email': email,
-        'token': token
+        'verification_url': verification_url,
+        'first_name': first_name,
+        'admin_token': email_admin_token
     }
 
     try:
@@ -178,10 +188,6 @@ def register_user():
         email_info = validate_email(email, check_deliverability=False)
         email = email_info.normalized
 
-        api_url = environ.get("API_URL")
-        if not api_url:
-            return jsonify({"error": "Internal server error"}), 500
-
         # Check if registration email already exists in backend_test.users
         existing_user = User.query.filter_by(email_address=email).first()
 
@@ -189,8 +195,7 @@ def register_user():
             # CASE 1: Record with matching email exists and user is not verified (i.e., access_permissions is Null)
             if existing_user.access_permissions is None:
                 # Resend verification email with updated token
-                verification_url = f"{api_url}/verify?jwt={create_access_token(email, expires_delta=timedelta(days=3))}"
-                send_verification_email(email, verification_url)
+                send_verification_email(email, user_first_name)
 
                 # Update the pending_registr_expiry_datetime to current datetime + 72 hours
                 # NOTE: Bad practice to use local time.
@@ -204,9 +209,6 @@ def register_user():
             # CASE 2: Record with matching email exists and user is already verified
             return jsonify({"error": "Email is already registered to a verified account"}), 400
 
-        # Set expiration date on verification token
-        verification_url = f"{api_url}/verify?jwt={create_access_token(email, expires_delta=timedelta(days=3))}"
-
         user = User()
         user.user_first_name = user_first_name
         user.user_last_name = user_last_name
@@ -218,7 +220,7 @@ def register_user():
         db.session.add(user)
         db.session.commit()
 
-        return send_verification_email(email, verification_url)
+        return send_verification_email(email, user_first_name)
 
     except EmailNotValidError as e:
         error_response = {
