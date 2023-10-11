@@ -55,11 +55,21 @@ class User(db.Model):
     access_permissions = db.Column(db.Integer)
 
 
-def send_verification_email(email, token):
+def send_verification_email(email, first_name):
+    api_url = environ.get("API_URL")
+    email_admin_token = environ.get("EMAIL_ADMIN_TOKEN")
+    if not api_url or not email_admin_token:
+        return jsonify({"error": "Internal server error"}), 500
+
+    # TODO: Set expiration date on verification token
+    verification_url = f"{api_url}/verify?jwt={create_access_token(email)}"
+    
     # Define the data you want to send in the request
     data = {
         'email': email,
-        'token': token
+        'verification_url': verification_url,
+        'first_name': first_name,
+        'admin_token': email_admin_token
     }
 
     try:
@@ -68,6 +78,8 @@ def send_verification_email(email, token):
             return jsonify({
                 "message": "Internal server error"
             }), 500
+            
+        print(GMAIL_API_URL)
 
         response = requests.post(GMAIL_API_URL, data=data)
 
@@ -139,13 +151,6 @@ def register_user():
         email_info = validate_email(email, check_deliverability=False)
         email = email_info.normalized
 
-        api_url = environ.get("API_URL")
-        if not api_url:
-            return jsonify({"error": "Internal server error"}), 500
-
-        # TODO: Set expiration date on verification token
-        verification_url = f"{api_url}/verify?jwt={create_access_token(email)}"
-
         # TODO: Exception for user already registered
         user = User()
         user.email_address = email
@@ -156,7 +161,7 @@ def register_user():
         db.session.add(user)
         db.session.commit()
 
-        return send_verification_email(email, verification_url)
+        return send_verification_email(email, name)
 
     except EmailNotValidError as e:
         error_response = {
