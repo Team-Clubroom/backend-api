@@ -249,7 +249,13 @@ def login_user():
             return jsonify({
                 "error": "Account doesn't exist. Please create an account first"
             }), 400
-        # TODO: Don't allow login for unverified accounts
+
+        # Check if user has valid access permissions. If not, do not allow login
+        if user.access_permissions is None:
+            return jsonify({
+                "error": "Account not verified. Please verify your email first"
+            }), 400
+
         # TODO: Decrypt the db password before comparing it against user provided password when logging in
         if user.password != password:
             return jsonify({
