@@ -96,11 +96,14 @@ class User(db.Model):
 def send_verification_email(email, first_name):
     api_url = environ.get("API_URL")
     email_admin_token = environ.get("EMAIL_ADMIN_TOKEN")
+
     if not api_url or not email_admin_token:
         return jsonify({"error": "Internal server error"}), 500
 
-    # TODO: Set expiration date on verification token
-    verification_url = f"{api_url}/verify?jwt={create_access_token(email)}"
+    # Define amount of time before token expires
+    expires = timedelta(hours=72)
+    verification_token = create_access_token(identity=email, expires_delta=expires)
+    verification_url = f"{api_url}/verify?jwt={verification_token}"
 
     # Define the data you want to send in the request
     data = {
