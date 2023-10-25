@@ -93,13 +93,64 @@ class User(db.Model):
     access_permissions = db.Column(db.Integer)
 
 
+class InternalServerError(Exception):
+    pass
+
+
+class EmailSendingError(Exception):
+    pass
+
+
+def error_response(error_message, error_code):
+    """
+    Create an error response with an error message and a status code.
+
+    :param error_message: The error message to include in the response.
+    :param error_code: The HTTP status code for the response.
+
+    :return: A JSON response with the provided error message and status code.
+    """
+    response_data = {'error': error_message}
+    return jsonify(response_data), error_code
+
+
+def success_response(message, success_code, data=None):
+    """
+    Create a success response with a message, optional data, and a status code.
+
+    :param message: A message to include in the response.
+    :param success_code: The HTTP status code for the response.
+    :param data: Optional data to include in the response (default is None).
+
+    :return: A JSON response with the provided message, optional data, and status code.
+    """
+    response_data = {'message': message}
+
+    if data is not None:
+        response_data['data'] = data
+
+    return jsonify(response_data), success_code
+
+
 def send_verification_email(email, first_name):
+    """
+    Send a verification email to the given email address.
+
+    :param email: The recipient's email address.
+    :param first_name: The recipient's first name.
+
+    :raises InternalServerError: If there is an internal server error, such as missing environment variables.
+    :raises EmailSendingError: If there is an error while sending the email through the external service.
+
+    Note that this function does not return any values upon success but raises exceptions when errors occur.
+    """
     api_url = environ.get("API_URL")
     email_admin_token = environ.get("EMAIL_ADMIN_TOKEN")
-    if not api_url or not email_admin_token:
-        return jsonify({"error": "Internal server error"}), 500
 
-    # TODO: Set expiration date on verification token
+    if not api_url or not email_admin_token:
+        raise InternalServerError("Internal server error")
+
+    # TODO: Set expiration date on the verification token
     verification_url = f"{api_url}/verify?jwt={create_access_token(email)}"
 
     # Define the data you want to send in the request
@@ -112,26 +163,17 @@ def send_verification_email(email, first_name):
 
     try:
         # Send the POST request with the form data
-        if not GMAIL_API_URL:
-            return jsonify({
-                "message": "Internal server error"
-            }), 500
+        if not environ.get("GMAIL_API_URL"):
+            raise InternalServerError("Internal server error")
 
-        response = requests.post(GMAIL_API_URL, data=data)
+        response = requests.post(environ.get("GMAIL_API_URL"), data=data)
 
-        # Check the response status code
-        if response.status_code == 200:
-            return jsonify({
-                "message": "Verification email sent successfully"
-            }), 200
-        else:
-            return jsonify({
-                "message": "Failed to send email"
-            }), response.status_code
+        # Check the response status code for errors and raise EmailSendingError if necessary
+        if response.status_code != 200:
+            raise EmailSendingError("Failed to send email")
+
     except requests.exceptions.RequestException as e:
-        return jsonify({
-            "message": "Something went wrong sending the email"
-        }), 500
+        raise EmailSendingError("Something went wrong sending the email")
 
 
 @application.route('/employers')
@@ -143,12 +185,6 @@ def get_all_employers():
     # Convert results to list of dictionaries
     results = [{"id": e.employer_id, "name": e.employer_name} for e in employers]
     return jsonify(results)
-
-
-@application.route('/hello-private')
-@jwt_required()
-def hello_world_private():
-    return "Hello world privately :)"
 
 
 @application.route('/verify', methods=['GET'])
@@ -166,10 +202,10 @@ def verify_user_account():
                f"<p>You can now login to your CELDV account</p>" \
                f"</div>"
     except NoResultFound:
-        return jsonify({"error": "Could not verify email. Try registering first"}), 400
+        return error_response("Could not verify email. Try registering first", 400)
 
     except RuntimeError:
-        return jsonify({"error": "Internal server error"}), 500
+        return error_response("Internal server error", 500)
 
 
 @application.route('/register', methods=['POST'])
@@ -182,9 +218,8 @@ def register_user():
         password = data.get("password", None)
 
         if not email or not password or not user_first_name or not user_last_name:
-            return jsonify({
-                "error": "Required arguments missing"
-            }), 400
+            return error_response("Required arguments missing", 400)
+
         email_info = validate_email(email, check_deliverability=False)
         email = email_info.normalized
 
@@ -204,10 +239,11 @@ def register_user():
 
                 db.session.commit()
 
-                return jsonify({"message": "Verification email resent!"}), 200
+                return success_response("Verification email resent!", 200)
+                # return jsonify({"message": "Verification email resent!"}), 200
 
             # CASE 2: Record with matching email exists and user is already verified
-            return jsonify({"error": "Email is already registered to a verified account"}), 400
+            return error_response("Email is already registered to a verified account", 400)
 
         user = User()
         user.user_first_name = user_first_name
@@ -218,21 +254,20 @@ def register_user():
         user.access_permissions = None
 
         db.session.add(user)
+        # only commit changes to the users table if the email is sent successfully
+        send_verification_email(email, user_first_name)
         db.session.commit()
 
-        return send_verification_email(email, user_first_name)
+        return success_response("Verification email sent!", 200)
 
     except EmailNotValidError as e:
-        error_response = {
-            'error': 'Invalid email'
-        }
-        return jsonify(error_response), 400
-
+        return error_response("Invalid email", 400)
     except RuntimeError:
-        error_response = {
-            'error': 'Invalid request format'
-        }
-        return jsonify(error_response), 400  # 400 Bad Request status code
+        return error_response("Invalid request format", 400)
+    except EmailSendingError as e:
+        return error_response(str(e), 500)
+    except InternalServerError as e:
+        return error_response(str(e), 500)
 
 
 @application.route('/login', methods=['POST'])
@@ -246,38 +281,23 @@ def login_user():
 
         user = User.query.filter_by(email_address=email).first()
         if not user:
-            return jsonify({
-                "error": "Account doesn't exist. Please create an account first"
-            }), 400
+            return error_response("Account doesn't exist. Please create an account first", 400)
 
         # Check if user has valid access permissions. If not, do not allow login
         if user.access_permissions is None:
-            return jsonify({
-                "error": "Account not verified. Please verify your email first"
-            }), 400
+            return error_response("Account not verified. Please verify your email first", 400)
 
         # TODO: Decrypt the db password before comparing it against user provided password when logging in
         if user.password != password:
-            return jsonify({
-                "error": "Invalid user name or password"
-            }), 400
+            return error_response("Invalid user name or password", 400)
 
         # create token
         # TODO: Set expiration date on LOGIN token
         token = create_access_token(identity=email)
 
         # Assuming registration is successful, you can send a success response
-        response = {
-            'message': 'Login successful',
-            'data': {
-                'jwt': token
-            }
-        }
-        return jsonify(response), 201  # 201 Created status code
+        return success_response("Login successful", 200, {'jwt': token})
 
     except KeyError:
         # Handle missing or invalid JSON keys in the request
-        error_response = {
-            'error': 'Invalid request format'
-        }
-        return jsonify(error_response), 400  # 400 Bad Request status code
+        return error_response("Invalid request form", 400)
