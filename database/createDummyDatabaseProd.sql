@@ -1,11 +1,11 @@
--- If the database "backend_test" does not exist, create it.
-CREATE DATABASE IF NOT EXISTS backend_test;
+-- If the database "" does not exist, create it.
+CREATE DATABASE IF NOT EXISTS backend_prod;
 
--- All commands hereafter act upon the database "backend_test".
-USE backend_test;
+-- All commands hereafter act upon the database "backend_prod".
+USE backend_prod;
 
 -- To ensure the most up-to-date tables are created, this script will drop all
--- tables within backend_test.
+-- tables within backend_prod.
 DELIMITER //
 
 CREATE PROCEDURE DropAllTablesInDatabase()
@@ -15,7 +15,7 @@ BEGIN
     DECLARE _cursor CURSOR FOR 
         SELECT table_name 
         FROM information_schema.tables
-        WHERE table_schema = "backend_test";
+        WHERE table_schema = "backend_prod";
 
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET _done = TRUE;
 
@@ -29,7 +29,7 @@ BEGIN
             LEAVE DROP_TABLES_LOOP;
         END IF;
 
-        SET @dropStatement = CONCAT('DROP TABLE IF EXISTS backend_test.`', _tableName, '`;');
+        SET @dropStatement = CONCAT('DROP TABLE IF EXISTS backend_prod.`', _tableName, '`;');
         PREPARE dynamicStatement FROM @dropStatement;
         EXECUTE dynamicStatement;
         DEALLOCATE PREPARE dynamicStatement;
@@ -47,7 +47,7 @@ CALL DropAllTablesInDatabase();
 -- Don't forget to drop the procedure after using it
 DROP PROCEDURE IF EXISTS DropAllTablesInDatabase;
 
--- With backend_test wiped clean, this script will now build the tables.
+-- With backend_prod wiped clean, this script will now build the tables.
 -- Create table containing employees and their demographic data.
 CREATE TABLE employees (
     employee_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -101,10 +101,10 @@ CREATE TABLE users (
     access_permissions VARCHAR(1)
 );
 
--- With all tables in backend_test now created, this script will insert dummy
+-- With all tables in backend_prod now created, this script will insert dummy
 -- data for each of the tables.
 -- Create and insert employee records.
-INSERT INTO backend_test.employees (employee_first_name, employee_middle_name, employee_last_name)
+INSERT INTO backend_prod.employees (employee_first_name, employee_middle_name, employee_last_name)
 VALUES
     ("Niall", "Shoal", "Billingsly"),
     ("John", "Edward", "Smith"),
@@ -141,17 +141,17 @@ VALUES
     ("Sarah", "Alicia", "Hansen");
 
 -- Create and insert employer records.
-INSERT INTO backend_test.employers (employer_name, employer_founded_date, employer_dissolved_date, employer_status, employer_legal_status)
+INSERT INTO backend_prod.employers (employer_name, employer_founded_date, employer_dissolved_date, employer_status, employer_legal_status)
 VALUES
     ("Pine and Dandy", "2001-02-19", NULL, "Active", "Co."),
     ("Really Arboreal", "2005-08-06", "2009-04-10", "Dissolved", "Co.");
 
 -- Create and insert employer-relation record.
-INSERT INTO backend_test.employer_relations (parent_employer_id, child_employer_id, employer_relation_type, employer_relation_start_date, employer_relation_end_date)
+INSERT INTO backend_prod.employer_relations (parent_employer_id, child_employer_id, employer_relation_type, employer_relation_start_date, employer_relation_end_date)
 VALUES (1, 2, "Subsidiary", "2005-08-06", "2009-04-10");
 
 -- Create and insert employment records.
-INSERT INTO backend_test.employments (employee_id, employer_id, job_title, start_date, end_date)
+INSERT INTO backend_prod.employments (employee_id, employer_id, job_title, start_date, end_date)
 VALUES
     (1, 1, "Chief Executive Officer", "2001-02-19", NULL),
     (2, 1, "Logging Crew Chief", "2001-02-19", "2013-05-19"),
@@ -190,7 +190,7 @@ VALUES
     (33, 2, "Landscaper", "2005-09-19", "2009-04-10");
 
 -- Create and insert user records; in particular, insert administrative records.
-INSERT INTO backend_test.users (user_first_name, user_last_name, email_address, password, pending_registr_expiry_datetime, access_permissions)
+INSERT INTO backend_prod.users (user_first_name, user_last_name, email_address, password, pending_registr_expiry_datetime, access_permissions)
 VALUES
     ("Mohamed", "Albeik", "mfalbeik@ualr.edu", "dakospassword", "2023-10-01 17:32:12", '2'),
     ("Cory", "Eheart", "cleheart@ualr.edu", "coryspassword", "2023-10-01 17:33:13", '2'),
