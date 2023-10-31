@@ -232,8 +232,6 @@ def register_user():
                 # Resend verification email with updated token
                 send_verification_email(email, user_first_name)
 
-                # Update the pending_registr_expiry_datetime to current datetime + 72 hours
-                # NOTE: Bad practice to use local time.
                 # TODO: Update all timestamping functionality to use UTC time
                 existing_user.pending_registr_expiry_datetime = datetime.now() + timedelta(days=3)
 
@@ -249,6 +247,8 @@ def register_user():
         user.user_first_name = user_first_name
         user.user_last_name = user_last_name
         user.email_address = email
+        # TODO: Update all timestamping functionality to use UTC times
+        user.pending_registr_expiry_datetime = datetime.now() + timedelta(days=3)
         # TODO: Encrypt the given user password before storing it in database
         user.password = password
         user.access_permissions = None
