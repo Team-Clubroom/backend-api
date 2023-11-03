@@ -176,7 +176,7 @@ def send_verification_email(email, first_name):
         raise EmailSendingError("Something went wrong sending the email")
 
 
-@application.route('/employers')
+@application.route('/employers', methods=['GET'])
 @jwt_required()
 def get_all_employers():
     # Execute the SQL query
@@ -184,7 +184,7 @@ def get_all_employers():
 
     # Convert results to list of dictionaries
     results = [{"id": e.employer_id, "name": e.employer_name} for e in employers]
-    return jsonify(results)
+    return success_response(f"{len(results)} employers fetched", 200, results)
 
 
 @application.route('/verify', methods=['GET'])
