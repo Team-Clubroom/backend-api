@@ -1,12 +1,13 @@
 from datetime import datetime, timedelta
+from os import environ
+
+import requests
+from dotenv import load_dotenv
 from email_validator import validate_email, EmailNotValidError
 from flask import Flask, request, jsonify
+from flask_bcrypt import Bcrypt
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager
 from flask_sqlalchemy import SQLAlchemy
-from flask_bcrypt import Bcrypt
-from os import environ
-from dotenv import load_dotenv
-import requests
 from sqlalchemy.exc import NoResultFound
 
 # load environment variables from .env file
@@ -183,7 +184,16 @@ def get_all_employers():
     employers = Employer.query.all()
 
     # Convert results to list of dictionaries
-    results = [{"id": e.employer_id, "name": e.employer_name} for e in employers]
+    results = [{"id": e.employer_id,
+                "name": e.employer_name,
+                "previousName": e.employer_previous_name,
+                "foundedDate": e.employer_founded_date,
+                "dissolvedDate": e.employer_dissolved_date,
+                "bankruptcyDate": e.employer_bankruptcy_date,
+                "status": e.employer_status,
+                "legalStatus": e.employer_legal_status,
+                "nameChangeReason": e.employer_name_change_reason
+                } for e in employers]
     return success_response(f"{len(results)} employers fetched", 200, results)
 
 
@@ -291,9 +301,9 @@ def login_user():
         if user.password != password:
             return error_response("Invalid user name or password", 400)
 
-        # create token
-        # TODO: Set expiration date on LOGIN token
-        token = create_access_token(identity=email)
+        # Define amount of time before token expires
+        expires = timedelta(hours=72)
+        token = create_access_token(identity=email, expires_delta=expires)
 
         # Assuming registration is successful, you can send a success response
         return success_response("Login successful", 200, {'jwt': token})
