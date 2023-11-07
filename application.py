@@ -150,8 +150,10 @@ def send_verification_email(email, first_name):
     if not api_url or not email_admin_token:
         raise InternalServerError("Internal server error")
 
-    # TODO: Set expiration date on the verification token
-    verification_url = f"{api_url}/verify?jwt={create_access_token(email)}"
+    # Define amount of time before token expires
+    expires = timedelta(hours=72)
+    verification_token = create_access_token(identity=email, expires_delta=expires)
+    verification_url = f"{api_url}/verify?jwt={verification_token}"
 
     # Define the data you want to send in the request
     data = {
