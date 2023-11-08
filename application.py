@@ -198,16 +198,22 @@ def get_all_employers():
     # Execute the SQL query
     employers = Employer.query.all()
 
-    # Convert results to list of dictionaries
+    # # Convert results to list of dictionaries
     results = [{"id": e.employer_id,
                 "name": e.employer_name,
-                "previousName": e.employer_previous_name,
+                "address": {
+                    "line1": e.employer_addr_line_1,
+                    "line2": e.employer_addr_line_2,
+                    "city": e.employer_addr_city,
+                    "state": e.employer_addr_state,
+                    "zipCode": e.employer_addr_zip_code,
+                },
                 "foundedDate": e.employer_founded_date,
                 "dissolvedDate": e.employer_dissolved_date,
                 "bankruptcyDate": e.employer_bankruptcy_date,
+                "industrySectorCode": e.employer_industry_sector_code,
                 "status": e.employer_status,
-                "legalStatus": e.employer_legal_status,
-                "nameChangeReason": e.employer_name_change_reason
+                "legalStatus": e.employer_legal_status
                 } for e in employers]
     return success_response(f"{len(results)} employers fetched", 200, results)
 
