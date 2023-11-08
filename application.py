@@ -62,13 +62,17 @@ class Employer(db.Model):
 
     employer_id = db.Column(db.Integer, primary_key=True)
     employer_name = db.Column(db.String(255))
-    employer_previous_name = db.Column(db.String(255))
+    employer_addr_line_1 = db.Column(db.String(255))
+    employer_addr_line_2 = db.Column(db.String(255))
+    employer_addr_city = db.Column(db.String(255))
+    employer_addr_state = db.Column(db.String(255))
+    employer_addr_zip_code = db.Column(db.String(255))
     employer_founded_date = db.Column(db.String(10))
     employer_dissolved_date = db.Column(db.String(10))
     employer_bankruptcy_date = db.Column(db.String(10))
+    employer_industry_sector_code = db.Column(db.Integer)
     employer_status = db.Column(db.String(255))
     employer_legal_status = db.Column(db.String(255))
-    employer_name_change_reason = db.Column(db.String(255))
 
 
 class Employment(db.Model):
@@ -80,6 +84,15 @@ class Employment(db.Model):
     job_title = db.Column(db.String(255))
     start_date = db.Column(db.String(10))
     end_date = db.Column(db.String(10))
+
+
+class NAICSCode(db.Model):
+    __tablename__ = 'naics_codes'
+
+    naics_code_id = db.Column(db.Integer, primary_key=True)
+    naics_sector_code = db.Column(db.Integer)
+    naics_sector_definition = db.Column(db.String(255))
+    naics_release_year = db.Column(db.String(4))
 
 
 class User(db.Model):
@@ -151,8 +164,10 @@ def send_verification_email(email, first_name):
     if not api_url or not email_admin_token:
         raise InternalServerError("Internal server error")
 
-    # TODO: Set expiration date on the verification token
-    verification_url = f"{api_url}/verify?jwt={create_access_token(email)}"
+    # Define amount of time before token expires
+    expires = timedelta(hours=72)
+    verification_token = create_access_token(identity=email, expires_delta=expires)
+    verification_url = f"{api_url}/verify?jwt={verification_token}"
 
     # Define the data you want to send in the request
     data = {
