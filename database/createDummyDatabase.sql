@@ -218,6 +218,34 @@ VALUES
     (32, 2, "Landscaper", "2005-08-06", "2008-11-13"),
     (33, 2, "Landscaper", "2005-09-19", "2009-04-10");
 
+-- Create and insert NAICS codes.
+INSERT INTO backend_test.naics_codes (naics_sector_code, naics_sector_definition, naics_release_year)
+VALUES
+    (11, "Agriculture, Forestry, Fishing and Hunting", 2022),
+    (21, "Mining, Quarrying, and Oil and Gas Extraction", 2022),
+    (22, "Utilities", 2022),
+    (23, "Construction", 2022),
+    (31, "Manufacturing", 2022),
+    (32, "Manufacturing", 2022),
+    (33, "Manufacturing", 2022),
+    (42, "Wholesale Trade", 2022),
+    (44, "Retail Trade", 2022),
+    (45, "Retail Trade", 2022),
+    (48, "Transportation and Warehousing", 2022),
+    (49, "Transportation and Warehousing", 2022),
+    (51, "Information", 2022),
+    (52, "Finance and Insurance", 2022),
+    (53, "Real Estate and Rental and Leasing", 2022),
+    (54, "Professional, Scientific, and Technical Services", 2022),
+    (55, "Management of Companies and Enterprises", 2022),
+    (56, "Administrative and Support and Waste Management and Remediation Services", 2022),
+    (61, "Educational Services", 2022),
+    (62, "Health Care and Social Assistance", 2022),
+    (71, "Arts, Entertainment, and Recreation", 2022),
+    (72, "Accommodation and Food Services", 2022),
+    (81, "Other Services (except Public Administration)", 2022),
+    (92, "Public Administration", 2022);
+
 -- Create and insert user records; in particular, insert administrative records.
 INSERT INTO backend_test.users (user_first_name, user_last_name, email_address, password, pending_registr_expiry_datetime, access_permissions)
 VALUES
