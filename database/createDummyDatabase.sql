@@ -70,13 +70,17 @@ CREATE TABLE employer_relations (
 CREATE TABLE employers (
     employer_id INT AUTO_INCREMENT PRIMARY KEY,
     employer_name VARCHAR(255),
-    employer_previous_name VARCHAR(255) DEFAULT NULL,
+    employer_addr_line_1 VARCHAR(255),
+    employer_addr_line_2 VARCHAR(255),
+    employer_addr_city VARCHAR(255),
+    employer_addr_state VARCHAR(255),
+    employer_addr_zip_code VARCHAR(255),
     employer_founded_date VARCHAR(10),
     employer_dissolved_date VARCHAR(10) DEFAULT NULL,
     employer_bankruptcy_date VARCHAR(10) DEFAULT NULL,
+    employer_industry_sector_code INT,
     employer_status VARCHAR(255),
-    employer_legal_status VARCHAR(255),
-    employer_name_change_reason VARCHAR(255) DEFAULT NULL
+    employer_legal_status VARCHAR(255)
 );
 
 -- Create table of employment relations between employee and employer.
@@ -87,6 +91,14 @@ CREATE TABLE employments (
     job_title VARCHAR(255),
     start_date VARCHAR(10),
     end_date VARCHAR(10) DEFAULT NULL
+);
+
+-- Create table of NAICS codes.
+CREATE TABLE naics_codes (
+    naics_code_id INT AUTO_INCREMENT PRIMARY KEY,
+    naics_sector_code INT,
+    naics_sector_definition VARCHAR(255),
+    naics_release_year VARCHAR(4)
 );
 
 -- Create table of application users, their demographic information, and
@@ -141,14 +153,31 @@ VALUES
     ("Sarah", "Alicia", "Hansen");
 
 -- Create and insert employer records.
-INSERT INTO backend_test.employers (employer_name, employer_founded_date, employer_dissolved_date, employer_status, employer_legal_status)
+INSERT INTO backend_test.employers (employer_name, employer_addr_line_1, employer_addr_line_2, employer_addr_city, employer_addr_state, employer_addr_zip_code, employer_founded_date, employer_dissolved_date, employer_industry_sector_code, employer_status, employer_legal_status)
 VALUES
-    ("Pine and Dandy", "2001-02-19", NULL, "Active", "Co."),
-    ("Really Arboreal", "2005-08-06", "2009-04-10", "Dissolved", "Co.");
+    ('Pine and Dandy', '123 Fantasy Rd', NULL, 'Anytown', 'AR', '99999', '2001-02-19', NULL, 32, 'Active', 'Co.'),
+    ('Really Arboreal', '357 Dreamy Cir', 'Lot E', 'Anytown', 'AR', '99999', '2005-08-06', '2009-04-10', 44, 'Dissolved', 'Co.'),
+    ('Patty\'s Cakes', '2023 Rightnow Blvd', NULL, 'Somecity', 'AR', '88888', '2012-04-16', '2019-04-30', 31, 'Merged', 'LLC.'),
+    ('Smooth Eddie\'s Smoothie Eatery', '888 Eighty Ln', NULL, 'Thatcity', 'AR', '77777', '2008-11-04', '2019-04-30', 31, 'Merged', 'Co.'),
+    ('Just Desserts', '4545 Cupcake Way', 'Suite B', 'Thatcity', 'AR', '77777', '2019-05-01', NULL, 31, 'Active', 'Co.'),
+    ('Twiddler', '1010 Example Rd', NULL, 'Anytown', 'AR', '99999', '2007-03-21', NULL, 51, 'Active', 'Inc.'),
+    ('Hex', '1010 Example Rd', NULL, 'Anytown', 'AR', '99999', '2023-07-22', NULL, 51, 'Active', 'Inc.'),
+    ('Scantine', '1234 Imaginary Ave', NULL, 'Thatcity', 'AR', '77777', '2002-12-03', NULL, 52, 'Active', 'Co.'),
+    ('HelpQuest', '123 Beowulf Dr', NULL, 'Somecity', 'AR', '88888', '1999-03-09', '2014-07-09', 52, 'Acquired', 'Inc.'),
+    ('Talcum State Healthcare', '123 Gilgamesh Ave', NULL, 'Anytown', 'AR', '99999', '2005-10-29', '2011-09-02', 52, 'Acquired', 'Co.'),
+    ('Five-O Pensions', '123 Bluebell Rd', NULL, 'Anytown', 'AR', '99999', '2004-03-17', '2021-01-04', 52, 'Acquired', 'Co.'),
+    ('Synagogues Fish & Chips', '123 Everywhere Cir', NULL, 'Thatcity', 'AR', '77777', '1972-06-12', NULL, 72, 'Active', 'Co.');
 
 -- Create and insert employer-relation record.
 INSERT INTO backend_test.employer_relations (parent_employer_id, child_employer_id, employer_relation_type, employer_relation_start_date, employer_relation_end_date)
-VALUES (1, 2, "Subsidiary", "2005-08-06", "2009-04-10");
+VALUES
+    (1, 2, 'Subsidiary', '2005-08-06', '2009-04-10'),
+    (3, 5, 'Merger', '2019-05-01', NULL),
+    (4, 5, 'Merger', '2019-05-01', NULL),
+    (6, 7, 'Rebrand', '2023-07-22', NULL),
+    (8, 9, 'Acquisition', '2014-07-10', NULL),
+    (8, 10, 'Acquisition', '2011-09-03', NULL),
+    (8, 11, 'Acquisition', '2021-01-05', NULL);
 
 -- Create and insert employment records.
 INSERT INTO backend_test.employments (employee_id, employer_id, job_title, start_date, end_date)
@@ -188,6 +217,34 @@ VALUES
     (31, 2, "Office Manager", "2005-08-06", "2009-04-10"),
     (32, 2, "Landscaper", "2005-08-06", "2008-11-13"),
     (33, 2, "Landscaper", "2005-09-19", "2009-04-10");
+
+-- Create and insert NAICS codes.
+INSERT INTO backend_test.naics_codes (naics_sector_code, naics_sector_definition, naics_release_year)
+VALUES
+    (11, "Agriculture, Forestry, Fishing and Hunting", 2022),
+    (21, "Mining, Quarrying, and Oil and Gas Extraction", 2022),
+    (22, "Utilities", 2022),
+    (23, "Construction", 2022),
+    (31, "Manufacturing", 2022),
+    (32, "Manufacturing", 2022),
+    (33, "Manufacturing", 2022),
+    (42, "Wholesale Trade", 2022),
+    (44, "Retail Trade", 2022),
+    (45, "Retail Trade", 2022),
+    (48, "Transportation and Warehousing", 2022),
+    (49, "Transportation and Warehousing", 2022),
+    (51, "Information", 2022),
+    (52, "Finance and Insurance", 2022),
+    (53, "Real Estate and Rental and Leasing", 2022),
+    (54, "Professional, Scientific, and Technical Services", 2022),
+    (55, "Management of Companies and Enterprises", 2022),
+    (56, "Administrative and Support and Waste Management and Remediation Services", 2022),
+    (61, "Educational Services", 2022),
+    (62, "Health Care and Social Assistance", 2022),
+    (71, "Arts, Entertainment, and Recreation", 2022),
+    (72, "Accommodation and Food Services", 2022),
+    (81, "Other Services (except Public Administration)", 2022),
+    (92, "Public Administration", 2022);
 
 -- Create and insert user records; in particular, insert administrative records.
 INSERT INTO backend_test.users (user_first_name, user_last_name, email_address, password, pending_registr_expiry_datetime, access_permissions)
