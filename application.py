@@ -332,3 +332,52 @@ def login_user():
     except KeyError:
         # Handle missing or invalid JSON keys in the request
         return error_response("Invalid request form", 400)
+
+
+@application.route('/employer', methods=['POST'])
+def create_employer():
+    try:
+        # Parse the input data
+        data = request.json
+        employer_name = data.get("employer_name")
+        employer_addr_line_1 = data.get("employer_addr_line_1")
+        employer_addr_line_2 = data.get("employer_addr_line_2")
+        employer_addr_city = data.get("employer_addr_city")
+        employer_addr_state = data.get("employer_addr_state")
+        employer_addr_zip_code = data.get("employer_addr_zip_code")
+        employer_founded_date = data.get("employer_founded_date")
+        employer_dissolved_date = data.get("employer_dissolved_date")
+        employer_bankruptcy_date = data.get("employer_bankruptcy_date")
+        employer_industry_sector_code = data.get("employer_industry_sector_code")
+        employer_status = data.get("employer_status")
+        employer_legal_status = data.get("employer_legal_status")
+
+        if not all([employer_name, employer_addr_line_1, employer_addr_city,
+                    employer_addr_state, employer_addr_zip_code,
+                    employer_founded_date, employer_industry_sector_code,
+                    employer_status, employer_legal_status]):
+            return error_response("Missing required fields", 400)
+
+        new_employer = Employer(
+            employer_name=employer_name,
+            employer_addr_line_1=employer_addr_line_1,
+            employer_addr_line_2=employer_addr_line_2,
+            employer_addr_city=employer_addr_city,
+            employer_addr_state=employer_addr_state,
+            employer_addr_zip_code=employer_addr_zip_code,
+            employer_founded_date=employer_founded_date,
+            employer_dissolved_date=employer_dissolved_date,
+            employer_bankruptcy_date=employer_bankruptcy_date,
+            employer_industry_sector_code=employer_industry_sector_code,
+            employer_status=employer_status,
+            employer_legal_status=employer_legal_status
+        )
+
+        db.session.add(new_employer)
+        db.session.commit()
+
+        return success_response("New employer added", 200)
+
+    except Exception as e:
+        return error_response(str(e), 500)
+
