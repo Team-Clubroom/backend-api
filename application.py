@@ -332,3 +332,104 @@ def login_user():
     except KeyError:
         # Handle missing or invalid JSON keys in the request
         return error_response("Invalid request form", 400)
+
+@application.route('/employer/split', methods=['POST'])
+def split_employers():
+    try:
+        # Parse the input data
+        data = request.json
+        company_a_name = data.get('company_a_name')
+        company_b_name = data.get('company_b_name')
+        company_c_name = data.get('company_c_name')
+        start_date = data.get('employer_relation_start_date')
+        end_date = data.get('employer_relation_end_date')
+        
+        if not all([company_a_name, company_b_name, company_c_name, start_date]):
+            return error_response("Missing required fields", 400)
+        
+        # Fetch employer IDs
+        company_a = Employer.query.filter_by(employer_name=company_a_name).first()
+        company_b = Employer.query.filter_by(employer_name=company_b_name).first()
+        company_c = Employer.query.filter_by(employer_name=company_c_name).first()
+        
+        if not all([company_a, company_b, company_c]):
+            return error_response("One or more companies not found", 404)
+        
+        # Relation type is spin-off
+        relation_type = "Spin-off"
+        
+        # Create new employer_relation records
+        new_relation_a_b = EmployerRelation(parent_employer_id=company_a.employer_id,
+                                            child_employer_id=company_b.employer_id,
+                                            employer_relation_type=relation_type,
+                                            employer_relation_start_date=start_date,
+                                            employer_relation_end_date=end_date)
+        
+        new_relation_a_c = EmployerRelation(parent_employer_id=company_a.employer_id,
+                                            child_employer_id=company_c.employer_id,
+                                            employer_relation_type=relation_type,
+                                            employer_relation_start_date=start_date,
+                                            employer_relation_end_date=end_date)
+        
+        db.session.add_all([new_relation_a_b, new_relation_a_c])
+        db.session.commit()
+        
+        return success_response("Employers successfully split", 200)
+        
+    except Exception as e:
+        return error_response(str(e), 500)
+
+@application.route('/employer/name-change', methods=['POST'])
+def employer_name_change():
+    try:
+        # Parse the input data
+        data = request.json
+        old_employer_name = data.get("old_employer_name")
+        new_employer_name = data.get("new_employer_name")
+        effective_date = data.get("name_change_effective_date")
+
+        if not all([old_employer_name, new_employer_name, effective_date]):
+            return error_response("Missing required fields", 400)
+
+        # Locate and update employer record with old name
+        old_employer = Employer.query.filter_by(employer_name=old_employer_name).first()
+        if not old_employer:
+            return error_response("Employer record with specified name not found", 404)
+
+        old_employer.employer_status = "Rebranded"
+
+        # Create employer record for post-rebrand employer
+        new_employer = Employer(
+            employer_name=new_employer_name,
+            employer_addr_line_1=old_employer.employer_addr_line_1,
+            employer_addr_line_2=old_employer.employer_addr_line_2,
+            employer_addr_city=old_employer.employer_addr_city,
+            employer_addr_state=old_employer.employer_addr_state,
+            employer_addr_zip_code=old_employer.employer_addr_zip_code,
+            employer_founded_date=old_employer.employer_founded_date,
+            employer_dissolved_date=old_employer.employer_dissolved_date,
+            employer_bankruptcy_date=old_employer.employer_bankruptcy_date,
+            employer_industry_sector_code=old_employer.employer_industry_sector_code,
+            employer_status="Active",
+            employer_legal_status=old_employer.employer_legal_status
+        )
+
+        db.session.add(new_employer)
+        db.session.flush()
+
+        # Create new employer_relation record
+        new_relation = EmployerRelation(
+            parent_employer_id=old_employer.employer_id,
+            child_employer_id=new_employer.employer_id,
+            employer_relation_type="Rebranding",
+            employer_relation_start_date=effective_date
+        )
+
+        db.session.add(new_relation)
+        db.session.commit()
+
+        return success_response("Employer name change processed", 200)
+
+    except Exception as e:
+        return error_response(str(e), 500)
+
