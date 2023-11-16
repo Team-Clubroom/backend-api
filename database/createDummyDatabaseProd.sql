@@ -1,11 +1,11 @@
--- If the database "" does not exist, create it.
-CREATE DATABASE IF NOT EXISTS backend_prod;
+-- If the database "backend_test" does not exist, create it.
+CREATE DATABASE IF NOT EXISTS backend_test;
 
--- All commands hereafter act upon the database "backend_prod".
-USE backend_prod;
+-- All commands hereafter act upon the database "backend_test".
+USE backend_test;
 
 -- To ensure the most up-to-date tables are created, this script will drop all
--- tables within backend_prod.
+-- tables within backend_test.
 DELIMITER //
 
 CREATE PROCEDURE DropAllTablesInDatabase()
@@ -15,7 +15,7 @@ BEGIN
     DECLARE _cursor CURSOR FOR 
         SELECT table_name 
         FROM information_schema.tables
-        WHERE table_schema = "backend_prod";
+        WHERE table_schema = "backend_test";
 
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET _done = TRUE;
 
@@ -29,7 +29,7 @@ BEGIN
             LEAVE DROP_TABLES_LOOP;
         END IF;
 
-        SET @dropStatement = CONCAT('DROP TABLE IF EXISTS backend_prod.`', _tableName, '`;');
+        SET @dropStatement = CONCAT('DROP TABLE IF EXISTS backend_test.`', _tableName, '`;');
         PREPARE dynamicStatement FROM @dropStatement;
         EXECUTE dynamicStatement;
         DEALLOCATE PREPARE dynamicStatement;
@@ -47,7 +47,7 @@ CALL DropAllTablesInDatabase();
 -- Don't forget to drop the procedure after using it
 DROP PROCEDURE IF EXISTS DropAllTablesInDatabase;
 
--- With backend_prod wiped clean, this script will now build the tables.
+-- With backend_test wiped clean, this script will now build the tables.
 -- Create table containing employees and their demographic data.
 CREATE TABLE employees (
     employee_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -70,13 +70,17 @@ CREATE TABLE employer_relations (
 CREATE TABLE employers (
     employer_id INT AUTO_INCREMENT PRIMARY KEY,
     employer_name VARCHAR(255),
-    employer_previous_name VARCHAR(255) DEFAULT NULL,
+    employer_addr_line_1 VARCHAR(255),
+    employer_addr_line_2 VARCHAR(255),
+    employer_addr_city VARCHAR(255),
+    employer_addr_state VARCHAR(2),
+    employer_addr_zip_code VARCHAR(10),
     employer_founded_date VARCHAR(10),
     employer_dissolved_date VARCHAR(10) DEFAULT NULL,
     employer_bankruptcy_date VARCHAR(10) DEFAULT NULL,
+    employer_industry_sector_code INT,
     employer_status VARCHAR(255),
-    employer_legal_status VARCHAR(255),
-    employer_name_change_reason VARCHAR(255) DEFAULT NULL
+    employer_legal_status VARCHAR(255)
 );
 
 -- Create table of employment relations between employee and employer.
@@ -87,6 +91,14 @@ CREATE TABLE employments (
     job_title VARCHAR(255),
     start_date VARCHAR(10),
     end_date VARCHAR(10) DEFAULT NULL
+);
+
+-- Create table of NAICS codes which describe employer's type of operations.
+CREATE TABLE naics_codes (
+    naics_code_id INT AUTO_INCREMENT PRIMARY KEY,
+    naics_sector_code INT,
+    naics_sector_definition VARCHAR(255),
+    naics_release_year INT
 );
 
 -- Create table of application users, their demographic information, and
@@ -101,10 +113,14 @@ CREATE TABLE users (
     access_permissions VARCHAR(1)
 );
 
--- With all tables in backend_prod now created, this script will insert dummy
+-- With all tables in backend_test now created, this script will insert dummy
 -- data for each of the tables.
 -- Create and insert employee records.
-INSERT INTO backend_prod.employees (employee_first_name, employee_middle_name, employee_last_name)
+INSERT INTO backend_test.employees (
+    employee_first_name,
+    employee_middle_name,
+    employee_last_name
+)
 VALUES
     ("Niall", "Shoal", "Billingsly"),
     ("John", "Edward", "Smith"),
@@ -141,17 +157,69 @@ VALUES
     ("Sarah", "Alicia", "Hansen");
 
 -- Create and insert employer records.
-INSERT INTO backend_prod.employers (employer_name, employer_founded_date, employer_dissolved_date, employer_status, employer_legal_status)
+INSERT INTO backend_test.employers (
+    employer_name,
+    employer_addr_line_1,
+    employer_addr_line_2,
+    employer_addr_city,
+    employer_addr_state,
+    employer_addr_zip_code,
+    employer_founded_date,
+    employer_dissolved_date,
+    employer_industry_sector_code,
+    employer_status,
+    employer_legal_status
+)
 VALUES
-    ("Pine and Dandy", "2001-02-19", NULL, "Active", "Co."),
-    ("Really Arboreal", "2005-08-06", "2009-04-10", "Dissolved", "Co.");
+    ("Pine and Dandy", "123 Fantasy Rd", NULL, "Anytown", "AR", "99999", "2001-02-19", NULL, 32, "Active", "Co."),
+    ("Really Arboreal", "357 Dreamy Cir", "Lot E", "Anytown", "AR", "99999", "2005-08-06", "2009-04-10", 44, "Dissolved", "Co."),
+	("Patty's Cakes", "2023 Rightnow Blvd", NULL, "Somecity", "AR", "88888", "2012-04-16", "2019-04-30", 31, "Merged", "LLC."),
+    ("Smooth Eddie's Smoothie Eatery", "888 Eighty Ln", NULL, "Thatcity", "AR", "77777", "2008-11-04", "2019-04-30", 31, "Merged", "Co."),
+    ("Just Desserts", "4545 Cupcake Way", "Suite B", "Thatcity", "AR", "77777", "2019-05-01", NULL, 31, "Active", "Co."),
+    ("Twiddler", "1010 Example Rd", NULL, "Anytown", "AR", "99999", "2007-03-21", NULL, 51, "Active", "Inc."),
+    ("Hex", "1010 Example Rd", NULL, "Anytown", "AR", "99999", "2023-07-22", NULL, 51, "Active", "Inc."),
+    ("Scantine", "1234 Imaginary Ave", NULL, "Thatcity", "AR", "77777", "2002-12-03", NULL, 52, "Active", "Co."),
+    ("HelpQuest", "123 Beowulf Dr", NULL, "Somecity", "AR", "88888", "1999-03-09", "2014-07-09", 52, "Acquired", "Inc."),
+    ("Talcum State Healthcare", "123 Gilgamesh Ave", NULL, "Anytown", "AR", "99999", "2005-10-29", "2011-09-02", 52, "Acquired", "Co."),
+    ("Five-O Pensions", "123 Bluebell Rd", NULL, "Anytown", "AR", "99999", "2004-03-17", "2021-01-04", 52, "Acquired", "Co."),
+    ("Synagogues Fish & Chips", "123 Everywhere Cir", NULL, "Thatcity", "AR", "77777", "1972-06-12", NULL, 72, "Active", "Co."),
+    ("Ultra-Mart", "123 Tinker Ave", NULL, "Everycity", "AR", "66666", "1988-09-21", NULL, 45, "Active", "Co."),
+    ("Ultra-Rx", "456 Builder Ln", NULL, "Everycity", "AR", "66666", "1993-11-11", NULL, 44, "Active", "Co."),
+    ("Mega-Mart", "9876 Inventor Rd", NULL, "Somecity", "AR", "88888", "1999-03-16", NULL, 45, "Active", "Co."),
+    ("Okay-Mart", "369 Patent Blvd", NULL, "Thatcity", "AR", "77777", "2000-02-21", NULL, 45, "Active", "Co."),
+    ("Mega-Mart Neighborhoods", "123 Millionaire Cir", NULL, "Thatcity", "AR", "77777", "2000-07-01", NULL, 44, "Active", "Co."),
+    ("Not-Great-Mart", "2468 Radio Rd", NULL, "Everycity", "AR", "66666", "2006-08-16", NULL, 45, "Active", "Co."); 
 
 -- Create and insert employer-relation record.
-INSERT INTO backend_prod.employer_relations (parent_employer_id, child_employer_id, employer_relation_type, employer_relation_start_date, employer_relation_end_date)
-VALUES (1, 2, "Subsidiary", "2005-08-06", "2009-04-10");
+INSERT INTO backend_test.employer_relations (
+    parent_employer_id,
+    child_employer_id,
+    employer_relation_type,
+    employer_relation_start_date,
+    employer_relation_end_date
+)
+VALUES
+    (1, 2, "Subsidiary", "2005-08-06", "2009-04-10"),
+    (3, 5, "Merger", "2019-05-01", NULL),
+    (4, 5, "Merger", "2019-05-01", NULL),
+    (6, 7, "Rebrand", "2023-07-22", NULL),
+    (8, 9, "Acquisition", "2014-07-10", NULL),
+    (8, 10, "Acquisition", "2011-09-03", NULL),
+    (8, 11, "Acquisition", "2021-01-05", NULL),
+    (13, 14, "Subsidiary", "1993-11-11", NULL),
+    (13, 15, "Subsidiary", "1999-03-16", NULL),
+    (15, 16, "Subsidiary", "2000-02-21", NULL),
+    (15, 17, "Subsidiary", "2000-07-01", NULL),
+    (16, 18, "Subsidiary", "2006-08-16", NULL);
 
 -- Create and insert employment records.
-INSERT INTO backend_prod.employments (employee_id, employer_id, job_title, start_date, end_date)
+INSERT INTO backend_test.employments (
+    employee_id,
+    employer_id,
+    job_title,
+    start_date,
+    end_date
+)
 VALUES
     (1, 1, "Chief Executive Officer", "2001-02-19", NULL),
     (2, 1, "Logging Crew Chief", "2001-02-19", "2013-05-19"),
@@ -189,8 +257,47 @@ VALUES
     (32, 2, "Landscaper", "2005-08-06", "2008-11-13"),
     (33, 2, "Landscaper", "2005-09-19", "2009-04-10");
 
+-- Create and insert NAICS sector codes.
+INSERT INTO backend_test.naics_codes (
+    naics_sector_code,
+    naics_sector_definition,
+    naics_release_year
+)
+VALUES
+    (11, "Agriculture, Forestry, Fishing and Hunting", 2022),
+    (21, "Mining, Quarrying, and Oil and Gas Extraction", 2022),
+    (22, "Utilities", 2022),
+    (23, "Construction", 2022),
+    (31, "Manufacturing", 2022),
+    (32, "Manufacturing", 2022),
+    (33, "Manufacturing", 2022),
+    (42, "Wholesale Trade", 2022),
+    (44, "Retail Trade", 2022),
+    (45, "Retail Trade", 2022),
+    (48, "Transportation and Warehousing", 2022),
+    (49, "Transportation and Warehousing", 2022),
+    (51, "Information", 2022),
+    (52, "Finance and Insurance", 2022),
+    (53, "Real Estate and Rental and Leasing", 2022),
+    (54, "Professional, Scientific, and Technical Services", 2022),
+    (55, "Management of Companies and Enterprises", 2022),
+    (56, "Administrative and Support and Waste Management and Remediation Services", 2022),
+    (61, "Educational Services", 2022),
+    (62, "Health Care and Social Assistance", 2022),
+    (71, "Arts, Entertainment, and Recreation", 2022),
+    (72, "Accommodation and Food Services", 2022),
+    (81, "Other Services (except Public Administration)", 2022),
+    (92, "Public Administration", 2022);
+
 -- Create and insert user records; in particular, insert administrative records.
-INSERT INTO backend_prod.users (user_first_name, user_last_name, email_address, password, pending_registr_expiry_datetime, access_permissions)
+INSERT INTO backend_test.users (
+    user_first_name,
+    user_last_name,
+    email_address,
+    password,
+    pending_registr_expiry_datetime,
+    access_permissions
+)
 VALUES
     ("Mohamed", "Albeik", "mfalbeik@ualr.edu", "dakospassword", "2023-10-01 17:32:12", '2'),
     ("Cory", "Eheart", "cleheart@ualr.edu", "coryspassword", "2023-10-01 17:33:13", '2'),

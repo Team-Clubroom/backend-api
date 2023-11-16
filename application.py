@@ -31,6 +31,10 @@ def init_application():
 
 
 application = init_application()
+
+if __name__ == "__main__":
+    application.run(debug=True)
+
 jwt = JWTManager(application)
 
 db = SQLAlchemy(application)
@@ -332,3 +336,57 @@ def login_user():
     except KeyError:
         # Handle missing or invalid JSON keys in the request
         return error_response("Invalid request form", 400)
+
+
+@application.route('/employers-graph', methods=['GET'])
+@jwt_required()
+def get_employer_graph():
+    data = request.json
+    employer_name = data.get("employer_name", None)
+
+    if not employer_name:
+        return error_response("Invalid employer name", 400)
+
+    try:
+        employer = Employer.query.filter_by(employer_name=employer_name).first()
+        if employer:
+            employers = {}
+            mapping = set()
+
+            def add_employer(employer):
+                if employer.employer_id not in employers:
+                    employers[employer.employer_id] = {
+                        "employer_id": employer.employer_id
+                    }
+
+            def find_parents(child_employer):
+                parent_relations = EmployerRelation.query.filter_by(child_employer_id=child_employer.employer_id).all()
+                for parent_relation in parent_relations:
+                    parent_employer = Employer.query.get(parent_relation.parent_employer_id)
+                    if parent_employer.employer_id not in employers:
+                        add_employer(parent_employer)
+                        mapping.add((parent_employer.employer_id, child_employer.employer_id, parent_relation.employer_relation_type))
+                        find_parents(parent_employer)
+                        find_children(parent_employer)
+
+            def find_children(parent_employer):
+                child_relations = EmployerRelation.query.filter_by(parent_employer_id=parent_employer.employer_id).all()
+                for child_relation in child_relations:
+                    child_employer = Employer.query.get(child_relation.child_employer_id)
+                    if child_employer.employer_id not in employers:
+                        add_employer(child_employer)
+                        mapping.add((parent_employer.employer_id, child_employer.employer_id, child_relation.employer_relation_type))
+                        find_children(child_employer)
+                        find_parents(child_employer)
+
+            add_employer(employer)
+            find_parents(employer)
+            find_children(employer)
+
+            mapping_list = [{"parent_node": parent, "child_node": child, "relation_type": relation_type} for parent, child, relation_type in mapping]
+
+            return success_response("Employer graph fetched successfully", 200, mapping_list)
+        else:
+            return error_response("Employer not found", 404)
+    except Exception as e:
+        return error_response("Internal server error", 500)
