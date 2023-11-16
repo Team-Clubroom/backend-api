@@ -305,7 +305,7 @@ def register_user():
         return error_response(str(e), 500)
 
 
-@application.route('/login', methods=['POST'])
+@application.route('/login', methods=['GET'])
 def login_user():
     try:
         # Get data from the JSON request
