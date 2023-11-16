@@ -340,11 +340,7 @@ def get_employer_graph():
             def add_employer(employer):
                 if employer.employer_id not in employers:
                     employers[employer.employer_id] = {
-                        "employer_name": employer.employer_name,
-                        "employer_addr_city": employer.employer_addr_city,
-                        "employer_founded_date": employer.employer_founded_date,
-                        "employer_industry_sector_code": employer.employer_industry_sector_code,
-                        "employer_status": employer.employer_status
+                        "employer_id": employer.employer_id
                     }
 
             def find_parents(child_employer):
@@ -353,7 +349,7 @@ def get_employer_graph():
                     parent_employer = Employer.query.get(parent_relation.parent_employer_id)
                     if parent_employer.employer_id not in employers:
                         add_employer(parent_employer)
-                        mapping.add((parent_employer.employer_name, child_employer.employer_name, parent_relation.employer_relation_type))
+                        mapping.add((parent_employer.employer_id, child_employer.employer_id, parent_relation.employer_relation_type))
                         find_parents(parent_employer)
                         find_children(parent_employer)
 
@@ -363,7 +359,7 @@ def get_employer_graph():
                     child_employer = Employer.query.get(child_relation.child_employer_id)
                     if child_employer.employer_id not in employers:
                         add_employer(child_employer)
-                        mapping.add((parent_employer.employer_name, child_employer.employer_name, child_relation.employer_relation_type))
+                        mapping.add((parent_employer.employer_id, child_employer.employer_id, child_relation.employer_relation_type))
                         find_children(child_employer)
                         find_parents(child_employer)
 
@@ -373,9 +369,7 @@ def get_employer_graph():
 
             mapping_list = [{"parent_node": parent, "child_node": child, "relation_type": relation_type} for parent, child, relation_type in mapping]
 
-            employers_list = list(employers.values())
-
-            return jsonify({"employers": employers_list, "mapping": mapping_list}), 200
+            return jsonify({"mapping": mapping_list}), 200
         else:
             return error_response("Employer not found", 404)
     except Exception as e:
