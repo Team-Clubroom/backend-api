@@ -305,7 +305,7 @@ def register_user():
         return error_response(str(e), 500)
 
 
-@application.route('/login', methods=['GET'])
+@application.route('/login', methods=['POST'])
 def login_user():
     try:
         # Get data from the JSON request
@@ -338,7 +338,7 @@ def login_user():
         return error_response("Invalid request form", 400)
 
 
-@application.route('/employers-graph', methods=['POST'])
+@application.route('/employers-graph', methods=['GET'])
 @jwt_required()
 def get_employer_graph():
     data = request.json
