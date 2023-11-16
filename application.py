@@ -385,7 +385,7 @@ def get_employer_graph():
 
             mapping_list = [{"parent_node": parent, "child_node": child, "relation_type": relation_type} for parent, child, relation_type in mapping]
 
-            return jsonify({"mapping": mapping_list}), 200
+            return success_response("Employer graph fetched successfully", 200, mapping_list)
         else:
             return error_response("Employer not found", 404)
     except Exception as e:
