@@ -323,6 +323,7 @@ def login_user():
 
 
 @application.route('/employers-graph', methods=['POST'])
+@jwt_required()
 def get_employer_graph():
     data = request.json
     employer_name = data.get("employer_name", None)
@@ -352,7 +353,7 @@ def get_employer_graph():
                     parent_employer = Employer.query.get(parent_relation.parent_employer_id)
                     if parent_employer.employer_id not in employers:
                         add_employer(parent_employer)
-                        mapping.add((parent_employer.employer_name, child_employer.employer_name))
+                        mapping.add((parent_employer.employer_name, child_employer.employer_name, parent_relation.employer_relation_type))
                         find_parents(parent_employer)
                         find_children(parent_employer)
 
@@ -362,7 +363,7 @@ def get_employer_graph():
                     child_employer = Employer.query.get(child_relation.child_employer_id)
                     if child_employer.employer_id not in employers:
                         add_employer(child_employer)
-                        mapping.add((parent_employer.employer_name, child_employer.employer_name))
+                        mapping.add((parent_employer.employer_name, child_employer.employer_name, child_relation.employer_relation_type))
                         find_children(child_employer)
                         find_parents(child_employer)
 
@@ -370,7 +371,7 @@ def get_employer_graph():
             find_parents(employer)
             find_children(employer)
 
-            mapping_list = [{"parent_node": parent, "child_node": child} for parent, child in mapping]
+            mapping_list = [{"parent_node": parent, "child_node": child, "relation_type": relation_type} for parent, child, relation_type in mapping]
 
             employers_list = list(employers.values())
 
