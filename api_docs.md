@@ -40,7 +40,7 @@ Request:
     employer_founded_date: "MM-DD-YYYY",
     employer_dissolved_date: "MM-DD-YYYY" | null,
     employer_bankruptcy_date: "MM-DD-YYYY" | null,
-    employer_industry_sector_code: string,
+    employer_industry_sector_code: number,
     employer_status: string,
     employer_legal_status: string,
     
@@ -50,7 +50,7 @@ Request:
 Response:
 {
     data: {
-        employer_id: string,
+        employer_id: number,
     }
     message: "New employer added",
 }

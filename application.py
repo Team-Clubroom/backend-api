@@ -376,7 +376,7 @@ def create_employer():
         db.session.add(new_employer)
         db.session.commit()
 
-        return success_response("New employer added", 201)
+        return success_response("New employer added", 201, {"employer_id": new_employer.employer_id})
 
     except Exception as e:
         return error_response(str(e), 500)
