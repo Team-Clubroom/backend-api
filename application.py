@@ -12,7 +12,37 @@ from sqlalchemy.exc import NoResultFound
 
 # load environment variables from .env file
 load_dotenv(".env")
-GMAIL_API_URL = environ.get('GMAIL_API_URL')
+
+
+def error_response(error_message, error_code):
+    """
+    Create an error response with an error message and a status code.
+
+    :param error_message: The error message to include in the response.
+    :param error_code: The HTTP status code for the response.
+
+    :return: A JSON response with the provided error message and status code.
+    """
+    response_data = {'error': error_message}
+    return jsonify(response_data), error_code
+
+
+def success_response(message, success_code, data=None):
+    """
+    Create a success response with a message, optional data, and a status code.
+
+    :param message: A message to include in the response.
+    :param success_code: The HTTP status code for the response.
+    :param data: Optional data to include in the response (default is None).
+
+    :return: A JSON response with the provided message, optional data, and status code.
+    """
+    response_data = {'message': message}
+
+    if data is not None:
+        response_data['data'] = data
+
+    return jsonify(response_data), success_code
 
 
 def init_application():
@@ -27,6 +57,11 @@ def init_application():
         'SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}'
     secret_key = environ.get('SECRET_KEY')
     app.config['SECRET_KEY'] = secret_key
+
+    if app.config['DEBUG']:
+        from dev_routes import development_routes_bp
+        app.register_blueprint(development_routes_bp, url_prefix='/dev')
+
     return app
 
 
@@ -113,37 +148,6 @@ class InternalServerError(Exception):
 
 class EmailSendingError(Exception):
     pass
-
-
-def error_response(error_message, error_code):
-    """
-    Create an error response with an error message and a status code.
-
-    :param error_message: The error message to include in the response.
-    :param error_code: The HTTP status code for the response.
-
-    :return: A JSON response with the provided error message and status code.
-    """
-    response_data = {'error': error_message}
-    return jsonify(response_data), error_code
-
-
-def success_response(message, success_code, data=None):
-    """
-    Create a success response with a message, optional data, and a status code.
-
-    :param message: A message to include in the response.
-    :param success_code: The HTTP status code for the response.
-    :param data: Optional data to include in the response (default is None).
-
-    :return: A JSON response with the provided message, optional data, and status code.
-    """
-    response_data = {'message': message}
-
-    if data is not None:
-        response_data['data'] = data
-
-    return jsonify(response_data), success_code
 
 
 def send_verification_email(email, first_name):
@@ -361,7 +365,8 @@ def get_employer_graph():
                     parent_employer = Employer.query.get(parent_relation.parent_employer_id)
                     if parent_employer.employer_id not in employers:
                         add_employer(parent_employer)
-                        mapping.add((parent_employer.employer_id, child_employer.employer_id, parent_relation.employer_relation_type))
+                        mapping.add((parent_employer.employer_id, child_employer.employer_id,
+                                     parent_relation.employer_relation_type))
                         find_parents(parent_employer)
                         find_children(parent_employer)
 
@@ -371,7 +376,8 @@ def get_employer_graph():
                     child_employer = Employer.query.get(child_relation.child_employer_id)
                     if child_employer.employer_id not in employers:
                         add_employer(child_employer)
-                        mapping.add((parent_employer.employer_id, child_employer.employer_id, child_relation.employer_relation_type))
+                        mapping.add((parent_employer.employer_id, child_employer.employer_id,
+                                     child_relation.employer_relation_type))
                         find_children(child_employer)
                         find_parents(child_employer)
 
@@ -379,7 +385,8 @@ def get_employer_graph():
             find_parents(employer)
             find_children(employer)
 
-            mapping_list = [{"parent_node": parent, "child_node": child, "relation_type": relation_type} for parent, child, relation_type in mapping]
+            mapping_list = [{"parent_node": parent, "child_node": child, "relation_type": relation_type} for
+                            parent, child, relation_type in mapping]
 
             return success_response("Employer graph fetched successfully", 200, mapping_list)
         else:
@@ -434,4 +441,3 @@ def create_employer():
 
     except Exception as e:
         return error_response(str(e), 500)
-
