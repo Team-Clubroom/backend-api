@@ -33,7 +33,7 @@ Request: { email: string, password: string }
 ```
 
 ```
-Response: { message: string, date: { jwt: string } }
+Response: { message: string, date: { jwt: string, isAdmin: boolean } }
 ```
 
 Generates a JWT using the server's secret key if the `email` and `password` match a record in the `users` table
