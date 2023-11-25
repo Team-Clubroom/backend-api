@@ -334,53 +334,6 @@ def login_user():
         return error_response("Invalid request form", 400)
 
 
-@application.route('/employer/split', methods=['POST'])
-def split_employers():
-    try:
-        # Parse the input data
-        data = request.json
-        company_a_name = data.get('company_a_name')
-        company_b_name = data.get('company_b_name')
-        company_c_name = data.get('company_c_name')
-        start_date = data.get('employer_relation_start_date')
-        end_date = data.get('employer_relation_end_date')
-
-        if not all([company_a_name, company_b_name, company_c_name, start_date]):
-            return error_response("Missing required fields", 400)
-
-        # Fetch employer IDs
-        company_a = Employer.query.filter_by(employer_name=company_a_name).first()
-        company_b = Employer.query.filter_by(employer_name=company_b_name).first()
-        company_c = Employer.query.filter_by(employer_name=company_c_name).first()
-
-        if not all([company_a, company_b, company_c]):
-            return error_response("One or more companies not found", 404)
-
-        # Relation type is spin-off
-        relation_type = "Spin-off"
-
-        # Create new employer_relation records
-        new_relation_a_b = EmployerRelation(parent_employer_id=company_a.employer_id,
-                                            child_employer_id=company_b.employer_id,
-                                            employer_relation_type=relation_type,
-                                            employer_relation_start_date=start_date,
-                                            employer_relation_end_date=end_date)
-
-        new_relation_a_c = EmployerRelation(parent_employer_id=company_a.employer_id,
-                                            child_employer_id=company_c.employer_id,
-                                            employer_relation_type=relation_type,
-                                            employer_relation_start_date=start_date,
-                                            employer_relation_end_date=end_date)
-
-        db.session.add_all([new_relation_a_b, new_relation_a_c])
-        db.session.commit()
-
-        return success_response("Employers successfully split", 200)
-
-    except Exception as e:
-        return error_response(str(e), 500)
-
-
 @application.route('/employer/name-change', methods=['POST'])
 def employer_name_change():
     try:
