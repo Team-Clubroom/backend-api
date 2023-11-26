@@ -342,13 +342,13 @@ def login_user():
 @jwt_required()
 def get_employer_graph():
     data = request.json
-    employer_name = data.get("employer_name", None)
+    employer_id = data.get("employer_id", None)
 
-    if not employer_name:
+    if not employer_id:
         return error_response("Invalid employer name", 400)
 
     try:
-        employer = Employer.query.filter_by(employer_name=employer_name).first()
+        employer = Employer.query.filter_by(employer_id=employer_id).first()
         if employer:
             employers = []
             employer_ids = set()
