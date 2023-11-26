@@ -334,34 +334,40 @@ def login_user():
         return error_response("Invalid request form", 400)
 
 
-@application.route('/employers-graph', methods=['GET'])
+@application.route('/employers-graph', methods=['POST'])
 @jwt_required()
 def get_employer_graph():
     data = request.json
-    employer_name = data.get("employer_name", None)
+    employer_id = data.get("employer_id", None)
 
-    if not employer_name:
-        return error_response("Invalid employer name", 400)
+    if not employer_id:
+        return error_response("Invalid employer id", 400)
 
     try:
-        employer = Employer.query.filter_by(employer_name=employer_name).first()
+        employer = Employer.query.filter_by(employer_id=employer_id).first()
         if employer:
-            employers = {}
+            employers = []
+            employer_ids = set()
             mapping = set()
 
             def add_employer(employer):
-                if employer.employer_id not in employers:
-                    employers[employer.employer_id] = {
-                        "employer_id": employer.employer_id
-                    }
+                if employer.employer_id not in employer_ids:
+                    employer_ids.add(employer.employer_id)
+                    employers.append({
+                        "id": str(employer.employer_id),
+                        "name": employer.employer_name,
+                        "estDate": employer.employer_founded_date,
+                        "position": {"x": 0, "y": 0}
+                    })
 
             def find_parents(child_employer):
                 parent_relations = EmployerRelation.query.filter_by(child_employer_id=child_employer.employer_id).all()
                 for parent_relation in parent_relations:
                     parent_employer = Employer.query.get(parent_relation.parent_employer_id)
-                    if parent_employer.employer_id not in employers:
+                    if parent_employer.employer_id not in employer_ids:
                         add_employer(parent_employer)
-                        mapping.add((parent_employer.employer_id, child_employer.employer_id, parent_relation.employer_relation_type))
+                        mapping.add((parent_employer.employer_id, child_employer.employer_id,
+                                     parent_relation.employer_relation_type))
                         find_parents(parent_employer)
                         find_children(parent_employer)
 
@@ -369,9 +375,10 @@ def get_employer_graph():
                 child_relations = EmployerRelation.query.filter_by(parent_employer_id=parent_employer.employer_id).all()
                 for child_relation in child_relations:
                     child_employer = Employer.query.get(child_relation.child_employer_id)
-                    if child_employer.employer_id not in employers:
+                    if child_employer.employer_id not in employer_ids:
                         add_employer(child_employer)
-                        mapping.add((parent_employer.employer_id, child_employer.employer_id, child_relation.employer_relation_type))
+                        mapping.add((parent_employer.employer_id, child_employer.employer_id,
+                                     child_relation.employer_relation_type))
                         find_children(child_employer)
                         find_parents(child_employer)
 
@@ -379,9 +386,14 @@ def get_employer_graph():
             find_parents(employer)
             find_children(employer)
 
-            mapping_list = [{"parent_node": parent, "child_node": child, "relation_type": relation_type} for parent, child, relation_type in mapping]
+            mapping_list = [
+                {"id": str(index + 1), "source": str(parent), "target": str(child), "relationType": relation_type} for
+                index, (parent, child, relation_type) in enumerate(mapping)]
 
-            return success_response("Employer graph fetched successfully", 200, mapping_list)
+            return success_response("Employer graph fetched successfully", 200, {
+                "nodes": employers,
+                "edges": mapping_list
+            })
         else:
             return error_response("Employer not found", 404)
     except Exception as e:
