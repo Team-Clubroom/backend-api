@@ -375,42 +375,59 @@ def get_employer_graph():
             employers = []
             employer_ids = set()
             mapping = set()
+            depth_node_count = {}
+            depth_nodes = {}
 
-            def add_employer(employer):
+            def add_employer(employer, depth, depth_node_count):
                 if employer.employer_id not in employer_ids:
                     employer_ids.add(employer.employer_id)
-                    employers.append({
+                    if depth not in depth_node_count:
+                        depth_node_count[depth] = 0
+                        depth_nodes[depth] = []
+                    depth_node_count[depth] += 1
+
+                    y_position = depth * 100
+
+                    employer_info = {
                         "id": str(employer.employer_id),
                         "name": employer.employer_name,
                         "estDate": employer.employer_founded_date,
-                        "position": {"x": 0, "y": 0}
-                    })
+                        "position": {"x": 0, "y": y_position}
+                    }
+                    employers.append(employer_info)
+                    depth_nodes[depth].append(employer_info)
 
-            def find_parents(child_employer):
+            def find_parents(child_employer, depth, depth_node_count):
                 parent_relations = EmployerRelation.query.filter_by(child_employer_id=child_employer.employer_id).all()
                 for parent_relation in parent_relations:
                     parent_employer = Employer.query.get(parent_relation.parent_employer_id)
                     if parent_employer.employer_id not in employer_ids:
-                        add_employer(parent_employer)
+                        add_employer(parent_employer, depth + 1, depth_node_count)
                         mapping.add((parent_employer.employer_id, child_employer.employer_id,
                                      parent_relation.employer_relation_type))
-                        find_parents(parent_employer)
-                        find_children(parent_employer)
+                        find_parents(parent_employer, depth + 1, depth_node_count)
+                        find_children(parent_employer, depth + 1, depth_node_count)
 
-            def find_children(parent_employer):
+            def find_children(parent_employer, depth, depth_node_count):
                 child_relations = EmployerRelation.query.filter_by(parent_employer_id=parent_employer.employer_id).all()
                 for child_relation in child_relations:
                     child_employer = Employer.query.get(child_relation.child_employer_id)
                     if child_employer.employer_id not in employer_ids:
-                        add_employer(child_employer)
+                        add_employer(child_employer, depth - 1, depth_node_count)
                         mapping.add((parent_employer.employer_id, child_employer.employer_id,
                                      child_relation.employer_relation_type))
-                        find_children(child_employer)
-                        find_parents(child_employer)
+                        find_children(child_employer, depth - 1, depth_node_count)
+                        find_parents(child_employer, depth - 1, depth_node_count)
 
-            add_employer(employer)
-            find_parents(employer)
-            find_children(employer)
+            add_employer(employer, 0, depth_node_count)
+            find_parents(employer, 0, depth_node_count)
+            find_children(employer, 0, depth_node_count)
+
+            for depth, nodes in depth_nodes.items():
+                node_count = len(nodes)
+                mid_point = ((node_count - 1) * 100) / 2
+                for index, employer in enumerate(nodes):
+                    employer["position"]["x"] = index * 100 - mid_point
 
             mapping_list = [
                 {"id": str(index + 1), "source": str(parent), "target": str(child), "relationType": relation_type} for
