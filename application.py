@@ -345,7 +345,7 @@ def get_employer_graph():
     employer_id = data.get("employer_id", None)
 
     if not employer_id:
-        return error_response("Invalid employer name", 400)
+        return error_response("Invalid employer id", 400)
 
     try:
         employer = Employer.query.filter_by(employer_id=employer_id).first()
