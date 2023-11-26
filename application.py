@@ -412,8 +412,9 @@ def get_employer_graph():
             find_parents(employer)
             find_children(employer)
 
-            mapping_list = [{"parent_node": parent, "child_node": child, "relation_type": relation_type} for
-                            parent, child, relation_type in mapping]
+            mapping_list = [
+                {"id": str(index + 1), "source": str(parent), "target": str(child), "relationType": relation_type} for
+                index, (parent, child, relation_type) in enumerate(mapping)]
 
             return success_response("Employer graph fetched successfully", 200, {
                 "nodes": employers,
