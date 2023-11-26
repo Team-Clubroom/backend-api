@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from functools import wraps
 from os import environ
 
 import requests
@@ -6,13 +7,37 @@ from dotenv import load_dotenv
 from email_validator import validate_email, EmailNotValidError
 from flask import Flask, request, jsonify
 from flask_bcrypt import Bcrypt
-from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager, verify_jwt_in_request, \
+    get_jwt
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import NoResultFound
 
 # load environment variables from .env file
 load_dotenv(".env")
 GMAIL_API_URL = environ.get('GMAIL_API_URL')
+
+BASIC_USER = "1"
+ADMIN_USER = "2"
+
+
+# Here is a custom decorator that verifies the JWT is present in the request,
+# as well as insuring that the JWT has a claim indicating that this user is
+# an administrator
+def admin_required():
+    def wrapper(fn):
+        @wraps(fn)
+        def decorator(*args, **kwargs):
+            verify_jwt_in_request()
+            claims = get_jwt()
+
+            if claims.get('is_admin', None):
+                return fn(*args, **kwargs)
+            else:
+                return error_response("Admin privileges required", 403)
+
+        return decorator
+
+    return wrapper
 
 
 def init_application():
@@ -224,7 +249,7 @@ def verify_user_account():
     try:
         email = get_jwt_identity()
         user = User.query.filter_by(email_address=email).first()
-        user.access_permissions = 1
+        user.access_permissions = BASIC_USER
         db.session.commit()
 
         # TODO: return an HTML view here
@@ -324,10 +349,11 @@ def login_user():
 
         # Define amount of time before token expires
         expires = timedelta(hours=72)
-        token = create_access_token(identity=email, expires_delta=expires)
+        is_admin = user.access_permissions == ADMIN_USER
+        token = create_access_token(identity=email, expires_delta=expires, additional_claims={"is_admin": is_admin})
 
         # Assuming registration is successful, you can send a success response
-        return success_response("Login successful", 200, {'jwt': token})
+        return success_response("Login successful", 200, {'jwt': token, "isAdmin": is_admin})
 
     except KeyError:
         # Handle missing or invalid JSON keys in the request
@@ -386,9 +412,8 @@ def get_employer_graph():
             find_parents(employer)
             find_children(employer)
 
-            mapping_list = [
-                {"id": str(index + 1), "source": str(parent), "target": str(child), "relationType": relation_type} for
-                index, (parent, child, relation_type) in enumerate(mapping)]
+            mapping_list = [{"parent_node": parent, "child_node": child, "relation_type": relation_type} for
+                            parent, child, relation_type in mapping]
 
             return success_response("Employer graph fetched successfully", 200, {
                 "nodes": employers,
@@ -401,6 +426,7 @@ def get_employer_graph():
 
 
 @application.route('/employer', methods=['POST'])
+@admin_required()
 def create_employer():
     try:
         # Parse the input data
@@ -446,4 +472,3 @@ def create_employer():
 
     except Exception as e:
         return error_response(str(e), 500)
-
