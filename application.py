@@ -323,7 +323,7 @@ def login_user():
 
 
 @application.route('/employers-graph', methods=['POST'])
-# @jwt_required()
+@jwt_required()
 def get_employer_graph():
     data = request.json
     employer_name = data.get("employer_name", None)
