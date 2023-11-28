@@ -473,3 +473,10 @@ def create_employer():
 
     except Exception as e:
         return error_response(str(e), 500)
+
+
+@application.route('/employer', methods=['PATCH'])
+@admin_required()
+def update_employer():
+    # TODO: implement this route
+    return error_response("Server reached but route not implemented yet", 400)
