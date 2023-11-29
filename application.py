@@ -353,7 +353,9 @@ def login_user():
         token = create_access_token(identity=email, expires_delta=expires, additional_claims={"is_admin": is_admin})
 
         # Assuming registration is successful, you can send a success response
-        return success_response("Login successful", 200, {'jwt': token, "isAdmin": is_admin})
+        return success_response("Login successful", 200,
+                                {'jwt': token, "isAdmin": is_admin, "email": email, "firstName": user.user_first_name,
+                                 "lastName": user.user_last_name})
 
     except KeyError:
         # Handle missing or invalid JSON keys in the request
