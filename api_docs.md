@@ -135,21 +135,22 @@ Returns a list of employers
 ----------------------------------------------------
 
 ```
-Request: { employer_name: string }
+Request: { employer_id: string }
 ```
 
 ```
 Response:
 {
     data: {
-        nodes: {
-            "<employer_id>": {
+        nodes: [
+            {
+                id: string,
                 name: string,
                 estDate: string,
                 position: { x: number, y: number }
             },
             (...)
-        },
+        ],
         edges: [
             {
                 id: string,
