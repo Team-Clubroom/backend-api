@@ -339,17 +339,22 @@ def employer_name_change():
     try:
         # Parse the input data
         data = request.json
-        old_employer_name = data.get("old_employer_name")
+        old_employer_id = data.get("old_employer_id")
         new_employer_name = data.get("new_employer_name")
         effective_date = data.get("name_change_effective_date")
+        print("old_employer_id: " + str(old_employer_id))
+        print("new_employer_name: " + new_employer_name)
+        print("name_change_effective_date: " + effective_date)
 
-        if not all([old_employer_name, new_employer_name, effective_date]):
+        if not all([old_employer_id, new_employer_name, effective_date]):
             return error_response("Missing required fields", 400)
+        print("Passed not-all-args")
 
         # Locate and update employer record with old name
-        old_employer = Employer.query.filter_by(employer_name=old_employer_name).first()
+        old_employer = Employer.query.filter_by(employer_id=old_employer_id).first()
         if not old_employer:
             return error_response("Employer record with specified name not found", 404)
+        print("Located old employer")
 
         old_employer.employer_status = "Rebranded"
 
@@ -371,6 +376,7 @@ def employer_name_change():
 
         db.session.add(new_employer)
         db.session.flush()
+        print("Session add and flush")
 
         # Create new employer_relation record
         new_relation = EmployerRelation(
@@ -379,9 +385,11 @@ def employer_name_change():
             employer_relation_type="Rebranding",
             employer_relation_start_date=effective_date
         )
+        print("New employer relation")
 
         db.session.add(new_relation)
         db.session.commit()
+        print("Second commit")
 
         return success_response("Employer name change processed", 201)
 
