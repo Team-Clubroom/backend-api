@@ -62,8 +62,7 @@ CREATE TABLE employer_relations (
     parent_employer_id INT,
     child_employer_id INT,
     employer_relation_type VARCHAR(255),
-    employer_relation_start_date VARCHAR(10),
-    employer_relation_end_date VARCHAR(10)
+    employer_relation_start_date VARCHAR(10)
 );
 
 -- Create table containing employers and employer data.
@@ -194,24 +193,23 @@ INSERT INTO backend_test.employer_relations (
     parent_employer_id,
     child_employer_id,
     employer_relation_type,
-    employer_relation_start_date,
-    employer_relation_end_date
+    employer_relation_start_date
 )
 VALUES
-    (1, 2, "Subsidiary", "2005-08-06", "2009-04-10"),
-    (3, 5, "Merger", "2019-05-01", NULL),
-    (4, 5, "Merger", "2019-05-01", NULL),
-    (6, 7, "Rebrand", "2023-07-22", NULL),
-    (8, 9, "Acquisition", "2014-07-10", NULL),
-    (8, 10, "Acquisition", "2011-09-03", NULL),
-    (8, 11, "Acquisition", "2021-01-05", NULL),
-    (13, 14, "Subsidiary", "1993-11-11", NULL),
-    (13, 15, "Subsidiary", "1999-03-16", NULL),
-    (15, 16, "Subsidiary", "2000-02-21", NULL),
-    (15, 17, "Subsidiary", "2000-07-01", NULL),
-    (16, 18, "Subsidiary", "2006-08-16", NULL),
-    (19, 20, "Spin-off", "2012-07-28", NULL),
-    (19, 21, "Spin-off", "2012-07-28", NULL);
+    (1, 2, "Subsidiary", "2005-08-06"),
+    (3, 5, "Merger", "2019-05-01"),
+    (4, 5, "Merger", "2019-05-01"),
+    (6, 7, "Rebrand", "2023-07-22"),
+    (8, 9, "Acquisition", "2014-07-10"),
+    (8, 10, "Acquisition", "2011-09-03"),
+    (8, 11, "Acquisition", "2021-01-05"),
+    (13, 14, "Subsidiary", "1993-11-11"),
+    (13, 15, "Subsidiary", "1999-03-16"),
+    (15, 16, "Subsidiary", "2000-02-21"),
+    (15, 17, "Subsidiary", "2000-07-01"),
+    (16, 18, "Subsidiary", "2006-08-16"),
+    (19, 20, "Spin-off", "2012-07-28"),
+    (19, 21, "Spin-off", "2012-07-28");
 
 -- Create and insert employment records.
 INSERT INTO backend_test.employments (
