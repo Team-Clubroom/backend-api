@@ -646,7 +646,8 @@ def request_admin():
 
         data = {
             "admin_token": email_admin_token,
-            "type": "request_admin",
+            "email": email,
+            "type": "admin_request",
             # provide a link to be used in the email sent to team email
             "admin_request_url": f"{api_url}/grant-admin?email={email}&admin_token={email_admin_token}"
         }
@@ -655,6 +656,13 @@ def request_admin():
         # Check the response status code for errors and raise EmailSendingError if necessary
         if response.status_code != 200:
             raise EmailSendingError("Failed to send email")
+
+        email_result = response.json()
+        error = email_result.get('error', None)
+        if error:
+            return error_response(error, 500)
+
+        return success_response("Admin request submitted", 201)
 
     except EmailSendingError:
         return error_response("Failed to send email. Email api responded with an error", 500)
