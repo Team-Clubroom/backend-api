@@ -12,8 +12,8 @@ CREATE PROCEDURE DropAllTablesInDatabase()
 BEGIN
     DECLARE _done INT DEFAULT FALSE;
     DECLARE _tableName VARCHAR(255);
-    DECLARE _cursor CURSOR FOR 
-        SELECT table_name 
+    DECLARE _cursor CURSOR FOR
+        SELECT table_name
         FROM information_schema.tables
         WHERE table_schema = "backend_test";
 
@@ -302,4 +302,3 @@ VALUES
     ("Cory", "Eheart", "cleheart@ualr.edu", "coryspassword", "2023-10-01 17:33:13", '2'),
     ("Brandon", "Huckaby", "bkhuckaby@ualr.edu", "brandonspassword", "2023-10-01 17:34:14", '2'),
     ("Luka", "Woodson", "llwoodson@ualr.edu", "lukaspassword", "2023-10-01 17:35:15", '2');
-

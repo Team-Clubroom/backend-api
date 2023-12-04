@@ -216,8 +216,7 @@ INSERT INTO backend_prod.employer_relations (
     parent_employer_id,
     child_employer_id,
     employer_relation_type,
-    employer_relation_start_date,
-    employer_relation_end_date
+    employer_relation_start_date
 )
 VALUES
     (1, 2, "Subsidiary", "2005-08-06"),
