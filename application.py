@@ -54,7 +54,6 @@ class EmployerRelation(db.Model):
     child_employer_id = db.Column(db.Integer)
     employer_relation_type = db.Column(db.String(255))
     employer_relation_start_date = db.Column(db.String(10))
-    employer_relation_end_date = db.Column(db.String(10))
 
 
 class Employer(db.Model):
