@@ -536,3 +536,47 @@ def create_employer():
 def update_employer():
     # TODO: implement this route
     return error_response("Server reached but route not implemented yet", 400)
+
+
+@application.route('/employer/split', methods=['POST'])
+def split_employers():
+    try:
+        # Parse the input data
+        data = request.json
+        company_a_id = data.get('company_a_id')
+        company_b_id = data.get('company_b_id')
+        company_c_id = data.get('company_c_id')
+        start_date = data.get('employer_relation_start_date')
+
+        if not all([company_a_id, company_b_id, company_c_id, start_date]):
+            return error_response("Missing required fields", 400)
+
+        # Fetch employer IDs
+        company_a = Employer.query.filter_by(employer_id=company_a_id).first()
+        company_b = Employer.query.filter_by(employer_id=company_b_id).first()
+        company_c = Employer.query.filter_by(employer_id=company_c_id).first()
+
+        if not all([company_a, company_b, company_c]):
+            return error_response("One or more companies not found", 404)
+
+        # Relation type is spin-off
+        relation_type = "Spin-off"
+
+        # Create new employer_relation records
+        new_relation_a_b = EmployerRelation(parent_employer_id=company_a.employer_id,
+                                            child_employer_id=company_b.employer_id,
+                                            employer_relation_type=relation_type,
+                                            employer_relation_start_date=start_date)
+
+        new_relation_a_c = EmployerRelation(parent_employer_id=company_a.employer_id,
+                                            child_employer_id=company_c.employer_id,
+                                            employer_relation_type=relation_type,
+                                            employer_relation_start_date=start_date)
+
+        db.session.add_all([new_relation_a_b, new_relation_a_c])
+        db.session.commit()
+
+        return success_response("Employers successfully split", 200)
+
+    except Exception as e:
+        return error_response(str(e), 500)
