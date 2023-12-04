@@ -349,9 +349,9 @@ def merge_employers():
             return error_response("Missing required fields", 400)
 
         # Fetch employer IDs
-        company_a = Employer.query.filter_by(employer_name=company_a_id).first()
-        company_b = Employer.query.filter_by(employer_name=company_b_id).first()
-        company_c = Employer.query.filter_by(employer_name=company_c_id).first()
+        company_a = Employer.query.filter_by(employer_id=company_a_id).first()
+        company_b = Employer.query.filter_by(employer_id=company_b_id).first()
+        company_c = Employer.query.filter_by(employer_id=company_c_id).first()
 
         if not all([company_a, company_b, company_c]):
             return error_response("One or more companies not found", 404)
