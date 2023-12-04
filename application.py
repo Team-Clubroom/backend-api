@@ -198,7 +198,8 @@ def send_verification_email(email, first_name):
         'email': email,
         'verification_url': verification_url,
         'first_name': first_name,
-        'admin_token': email_admin_token
+        'admin_token': email_admin_token,
+        'type': "user_verification"
     }
 
     try:
@@ -626,3 +627,38 @@ def merge_employers():
     except Exception as e:
         return error_response(str(e), 500)
 
+
+@application.route('/request-admin', methods=['POST'])
+@jwt_required()
+def request_admin():
+    try:
+        email = get_jwt_identity()
+        user = User.query.filter_by(email_address=email).first()
+        if user.access_permissions != BASIC_USER:
+            return error_response("Account is already an admin", 400)
+
+        api_url = environ.get("API_URL")
+        gmail_api_url = environ.get("GMAIL_API_URL")
+        email_admin_token = environ.get("EMAIL_ADMIN_TOKEN")
+
+        if not all([api_url, gmail_api_url, email_admin_token]):
+            raise InternalServerError("Internal server error")
+
+        data = {
+            "admin_token": email_admin_token,
+            "type": "request_admin",
+            # provide a link to be used in the email sent to team email
+            "admin_request_url": f"{api_url}/grant-admin?email={email}&admin_token={email_admin_token}"
+        }
+        response = requests.post(gmail_api_url, data=data)
+
+        # Check the response status code for errors and raise EmailSendingError if necessary
+        if response.status_code != 200:
+            raise EmailSendingError("Failed to send email")
+
+    except EmailSendingError:
+        return error_response("Failed to send email. Email api responded with an error", 500)
+    except requests.exceptions.RequestException as e:
+        return error_response("Something went wrong sending the email", 500)
+    except InternalServerError as e:
+        return error_response(str(e), 500)
