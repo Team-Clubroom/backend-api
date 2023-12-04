@@ -79,7 +79,6 @@ class EmployerRelation(db.Model):
     child_employer_id = db.Column(db.Integer)
     employer_relation_type = db.Column(db.String(255))
     employer_relation_start_date = db.Column(db.String(10))
-    employer_relation_end_date = db.Column(db.String(10))
 
 
 class Employer(db.Model):
@@ -360,6 +359,61 @@ def login_user():
     except KeyError:
         # Handle missing or invalid JSON keys in the request
         return error_response("Invalid request form", 400)
+
+
+@application.route('/employer/name-change', methods=['POST'])
+def employer_name_change():
+    try:
+        # Parse the input data
+        data = request.json
+        old_employer_id = data.get("old_employer_id")
+        new_employer_name = data.get("new_employer_name")
+        effective_date = data.get("name_change_effective_date")
+
+        if not all([old_employer_id, new_employer_name, effective_date]):
+            return error_response("Missing required fields", 400)
+
+        # Locate and update employer record with old name
+        old_employer = Employer.query.filter_by(employer_id=old_employer_id).first()
+        if not old_employer:
+            return error_response("Employer record with specified name not found", 404)
+
+        old_employer.employer_status = "Rebranded"
+
+        # Create employer record for post-rebrand employer
+        new_employer = Employer(
+            employer_name=new_employer_name,
+            employer_addr_line_1=old_employer.employer_addr_line_1,
+            employer_addr_line_2=old_employer.employer_addr_line_2,
+            employer_addr_city=old_employer.employer_addr_city,
+            employer_addr_state=old_employer.employer_addr_state,
+            employer_addr_zip_code=old_employer.employer_addr_zip_code,
+            employer_founded_date=old_employer.employer_founded_date,
+            employer_dissolved_date=old_employer.employer_dissolved_date,
+            employer_bankruptcy_date=old_employer.employer_bankruptcy_date,
+            employer_industry_sector_code=old_employer.employer_industry_sector_code,
+            employer_status="Active",
+            employer_legal_status=old_employer.employer_legal_status
+        )
+
+        db.session.add(new_employer)
+        db.session.flush()
+
+        # Create new employer_relation record
+        new_relation = EmployerRelation(
+            parent_employer_id=old_employer.employer_id,
+            child_employer_id=new_employer.employer_id,
+            employer_relation_type="Rebranding",
+            employer_relation_start_date=effective_date
+        )
+
+        db.session.add(new_relation)
+        db.session.commit()
+
+        return success_response("Employer name change processed", 201)
+
+    except Exception as e:
+        return error_response(str(e), 500)
 
 
 @application.route('/employers-graph', methods=['POST'])
