@@ -339,20 +339,19 @@ def merge_employers():
     try:
         # Parse the input data
         data = request.json
-        company_a_name = data.get('company_a_name')
-        company_b_name = data.get('company_b_name')
-        company_c_name = data.get('company_c_name')
+        company_a_id = data.get('company_a_id')
+        company_b_id = data.get('company_b_id')
+        company_c_id = data.get('company_c_id')
         start_date = data.get('employer_relation_start_date')
-        end_date = data.get('employer_relation_end_date')
 
-        if not all([company_a_name, company_b_name, company_c_name,
+        if not all([company_a_id, company_b_id, company_c_id,
                     start_date]):
             return error_response("Missing required fields", 400)
 
         # Fetch employer IDs
-        company_a = Employer.query.filter_by(employer_name=company_a_name).first()
-        company_b = Employer.query.filter_by(employer_name=company_b_name).first()
-        company_c = Employer.query.filter_by(employer_name=company_c_name).first()
+        company_a = Employer.query.filter_by(employer_name=company_a_id).first()
+        company_b = Employer.query.filter_by(employer_name=company_b_id).first()
+        company_c = Employer.query.filter_by(employer_name=company_c_id).first()
 
         if not all([company_a, company_b, company_c]):
             return error_response("One or more companies not found", 404)
@@ -364,14 +363,12 @@ def merge_employers():
         new_relation_a_c = EmployerRelation(parent_employer_id=company_a.employer_id,
                                             child_employer_id=company_c.employer_id,
                                             employer_relation_type=relation_type,
-                                            employer_relation_start_date=start_date,
-                                            employer_relation_end_date=end_date)
+                                            employer_relation_start_date=start_date)
 
         new_relation_b_c = EmployerRelation(parent_employer_id=company_b.employer_id,
                                             child_employer_id=company_c.employer_id,
                                             employer_relation_type=relation_type,
-                                            employer_relation_start_date=start_date,
-                                            employer_relation_end_date=end_date)
+                                            employer_relation_start_date=start_date)
 
         db.session.add_all([new_relation_a_c, new_relation_b_c])
         db.session.commit()
