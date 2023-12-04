@@ -12,8 +12,8 @@ CREATE PROCEDURE DropAllTablesInDatabase()
 BEGIN
     DECLARE _done INT DEFAULT FALSE;
     DECLARE _tableName VARCHAR(255);
-    DECLARE _cursor CURSOR FOR 
-        SELECT table_name 
+    DECLARE _cursor CURSOR FOR
+        SELECT table_name
         FROM information_schema.tables
         WHERE table_schema = "backend_test";
 
@@ -97,7 +97,7 @@ CREATE TABLE naics_codes (
     naics_code_id INT AUTO_INCREMENT PRIMARY KEY,
     naics_sector_code INT,
     naics_sector_definition VARCHAR(255),
-    naics_release_year INT
+    naics_release_year VARCHAR(4)
 );
 
 -- Create table of application users, their demographic information, and
@@ -306,4 +306,3 @@ VALUES
     ("Cory", "Eheart", "cleheart@ualr.edu", "coryspassword", "2023-10-01 17:33:13", '2'),
     ("Brandon", "Huckaby", "bkhuckaby@ualr.edu", "brandonspassword", "2023-10-01 17:34:14", '2'),
     ("Luka", "Woodson", "llwoodson@ualr.edu", "lukaspassword", "2023-10-01 17:35:15", '2');
-

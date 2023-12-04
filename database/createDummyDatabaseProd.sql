@@ -21,29 +21,6 @@ BEGIN
 
     OPEN _cursor;
 
--- If the database "backend_prod" does not exist, create it.
-CREATE DATABASE IF NOT EXISTS backend_prod;
-
--- All commands hereafter act upon the database "backend_prod".
-USE backend_prod;
-
--- To ensure the most up-to-date tables are created, this script will drop all
--- tables within backend_prod.
-DELIMITER //
-
-CREATE PROCEDURE DropAllTablesInDatabase()
-BEGIN
-    DECLARE _done INT DEFAULT FALSE;
-    DECLARE _tableName VARCHAR(255);
-    DECLARE _cursor CURSOR FOR
-        SELECT table_name
-        FROM information_schema.tables
-        WHERE table_schema = "backend_prod";
-
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET _done = TRUE;
-
-    OPEN _cursor;
-
     DROP_TABLES_LOOP: LOOP
 
         FETCH _cursor INTO _tableName;
@@ -325,4 +302,3 @@ VALUES
     ("Cory", "Eheart", "cleheart@ualr.edu", "coryspassword", "2023-10-01 17:33:13", '2'),
     ("Brandon", "Huckaby", "bkhuckaby@ualr.edu", "brandonspassword", "2023-10-01 17:34:14", '2'),
     ("Luka", "Woodson", "llwoodson@ualr.edu", "lukaspassword", "2023-10-01 17:35:15", '2');
-
