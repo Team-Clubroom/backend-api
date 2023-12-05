@@ -628,6 +628,24 @@ def merge_employers():
         return error_response(str(e), 500)
 
 
+def send_email(data: dict):
+    """
+    :param data:
+    :raises EmailSendingError
+    """
+    gmail_api_url = environ.get("GMAIL_API_URL")
+    response = requests.post(gmail_api_url, data=data)
+
+    # Check the response status code for errors and raise EmailSendingError if necessary
+    if response.status_code != 200:
+        raise EmailSendingError("Failed to send email")
+
+    email_result = response.json()
+    error = email_result.get('error', None)
+    if error:
+        raise EmailSendingError(error)
+
+
 @application.route('/request-admin', methods=['POST'])
 @jwt_required()
 def request_admin():
@@ -638,10 +656,9 @@ def request_admin():
             return error_response("Account is already an admin", 400)
 
         api_url = environ.get("API_URL")
-        gmail_api_url = environ.get("GMAIL_API_URL")
         email_admin_token = environ.get("EMAIL_ADMIN_TOKEN")
 
-        if not all([api_url, gmail_api_url, email_admin_token]):
+        if not all([api_url, email_admin_token]):
             raise InternalServerError("Internal server error")
 
         data = {
@@ -651,16 +668,7 @@ def request_admin():
             # provide a link to be used in the email sent to team email
             "admin_request_url": f"{api_url}/grant-admin?email={email}&admin_token={email_admin_token}"
         }
-        response = requests.post(gmail_api_url, data=data)
-
-        # Check the response status code for errors and raise EmailSendingError if necessary
-        if response.status_code != 200:
-            raise EmailSendingError("Failed to send email")
-
-        email_result = response.json()
-        error = email_result.get('error', None)
-        if error:
-            return error_response(error, 500)
+        send_email(data)
 
         return success_response("Admin request submitted", 201)
 
@@ -669,4 +677,43 @@ def request_admin():
     except requests.exceptions.RequestException as e:
         return error_response("Something went wrong sending the email", 500)
     except InternalServerError as e:
+        return error_response(str(e), 500)
+
+
+@application.route('/grant-admin', methods=['GET'])
+def grant_admin():
+    try:
+        # Get parameters from the URL
+        email = request.args.get('email')
+        admin_token = request.args.get('admin_token')
+
+        email_admin_token = environ.get("EMAIL_ADMIN_TOKEN")
+
+        if not email_admin_token:
+            return '<h1>Internal server error</h1>', 500
+
+        if not email or not admin_token or admin_token != email_admin_token:
+            return '<h1>Request is invalid</h1>', 400
+
+        user = User.query.filter_by(email_address=email).first()
+        if not user:
+            return '<h1>User with given email not found</h1>', 400
+
+        if user.access_permissions == ADMIN_USER:
+            return '<h1>User is already an admin</h1>', 400
+
+        user.access_permissions = ADMIN_USER
+        db.session.commit()
+
+        data = {
+            "admin_token": email_admin_token,
+            "email": email,
+            "type": "admin_granted",
+        }
+
+        send_email(data)
+
+        return f'<h1>Admin permission for {email} were successfully granted and user has been notified via email</h1>'
+
+    except EmailSendingError as e:
         return error_response(str(e), 500)
