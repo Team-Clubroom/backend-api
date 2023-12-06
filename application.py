@@ -634,6 +634,9 @@ def send_email(data: dict):
     :raises EmailSendingError
     """
     gmail_api_url = environ.get("GMAIL_API_URL")
+    if not gmail_api_url:
+        raise InternalServerError('Missing environment variable for email api')
+    
     response = requests.post(gmail_api_url, data=data)
 
     # Check the response status code for errors and raise EmailSendingError if necessary
