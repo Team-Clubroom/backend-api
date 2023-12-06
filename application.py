@@ -672,8 +672,8 @@ def request_admin():
 
         return success_response("Admin request submitted", 201)
 
-    except EmailSendingError:
-        return error_response("Failed to send email. Email api responded with an error", 500)
+    except EmailSendingError as e:
+        return error_response(f"Email api responded with an error: {e}", 500)
     except requests.exceptions.RequestException as e:
         return error_response("Something went wrong sending the email", 500)
     except InternalServerError as e:
