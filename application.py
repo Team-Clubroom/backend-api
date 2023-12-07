@@ -98,6 +98,24 @@ class Employer(db.Model):
     employer_status = db.Column(db.String(255))
     employer_legal_status = db.Column(db.String(255))
 
+    def to_front_end(self):
+        return {"id": self.employer_id,
+                "name": self.employer_name,
+                "address": {
+                    "line1": self.employer_addr_line_1,
+                    "line2": self.employer_addr_line_2,
+                    "city": self.employer_addr_city,
+                    "state": self.employer_addr_state,
+                    "zipCode": self.employer_addr_zip_code,
+                },
+                "foundedDate": self.employer_founded_date,
+                "dissolvedDate": self.employer_dissolved_date,
+                "bankruptcyDate": self.employer_bankruptcy_date,
+                "industrySectorCode": self.employer_industry_sector_code,
+                "status": self.employer_status,
+                "legalStatus": self.employer_legal_status
+                }
+
 
 class Employment(db.Model):
     __tablename__ = 'employments'
@@ -223,22 +241,7 @@ def get_all_employers():
     employers = Employer.query.all()
 
     # # Convert results to list of dictionaries
-    results = [{"id": e.employer_id,
-                "name": e.employer_name,
-                "address": {
-                    "line1": e.employer_addr_line_1,
-                    "line2": e.employer_addr_line_2,
-                    "city": e.employer_addr_city,
-                    "state": e.employer_addr_state,
-                    "zipCode": e.employer_addr_zip_code,
-                },
-                "foundedDate": e.employer_founded_date,
-                "dissolvedDate": e.employer_dissolved_date,
-                "bankruptcyDate": e.employer_bankruptcy_date,
-                "industrySectorCode": e.employer_industry_sector_code,
-                "status": e.employer_status,
-                "legalStatus": e.employer_legal_status
-                } for e in employers]
+    results = [e.to_front_end() for e in employers]
     return success_response(f"{len(results)} employers fetched", 200, results)
 
 
@@ -410,7 +413,7 @@ def employer_name_change():
         db.session.add(new_relation)
         db.session.commit()
 
-        return success_response("Employer name change processed", 201)
+        return success_response("Employer name change processed", 201, {"newEmployer": new_employer.to_front_end()})
 
     except Exception as e:
         return error_response(str(e), 500)
@@ -625,4 +628,3 @@ def merge_employers():
 
     except Exception as e:
         return error_response(str(e), 500)
-
