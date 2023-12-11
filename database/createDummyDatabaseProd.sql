@@ -188,7 +188,12 @@ VALUES
     ("We Only Own Half the Stuff", "147 Colony Cir", NULL, "Anytown", "AR", "99999", "2012-07-28", NULL, 32, "Active", "Co."),
     ("We Own the Rest", "456 Split Dr", NULL, "Somecity", "AR", "88888", "2012-07-28", NULL, 32, "Active", "Co."),
     ("The Tooth Hurts", "123 Dumb Ln", "Ste C", "Somecity", "AR", "88888", "2014-03-01", NULL, 62, "Active", "LLP"),
-    ("Lizzie Borden's Flowers & Boutique", "456 Seriously Dr", NULL, "Anytown", "AR", "99999", "2000-10-14", NULL, 45, "Active", "Co.");
+    ("Lizzie Borden's Flowers & Boutique", "456 Seriously Dr", NULL, "Anytown", "AR", "99999", "2000-10-14", NULL, 45, "Active", "Co."),
+    ("Super Petrol Brothers", "789 Theory St", NULL, "Everycity", "AR", "66666", "1988-09-21", NULL, 45, "Active", "Co."),
+    ("Lady Jane's Fish Hatchery", "1010 Lookie Ln", NULL, "Everycity", "AR", "66666", "1988-09-21", NULL, 45, "Active", "Co."),
+    ("Tim's Shady Shoppe", "999 Hexadecimal Dr", NULL, "Thatcity", "AR", "77777", "2000-07-01", NULL, 44, "Active", "Co."),
+    ("Paper Planes", "111 Noshot Dr", NULL, "Somecity", "AR", "88888", "2012-04-16", NULL, 51, "Active", "Co."),
+    ("Fair to Midland Fairgrounds", "321 Robust Cir", "Lot B", "Somecity", "AR", "88888", "2012-09-16", NULL, 31, "Active", "LLC.");
 
 -- Create and insert employer-relation record.
 INSERT INTO backend_prod.employer_relations (
