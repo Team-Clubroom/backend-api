@@ -729,7 +729,8 @@ def grant_admin():
 @jwt_required()
 def delete_employer():
     try:
-        employer_id = request.args.get('employer_id')
+        data = request.json
+        employer_id = data.get('employer_id')
 
         if not employer_id:
             return error_response("Employer ID is required", 400)
