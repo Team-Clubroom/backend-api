@@ -477,8 +477,115 @@ def create_employer():
         return error_response(str(e), 500)
 
 
+def validate_date(date_string):
+    try:
+        datetime.strptime(date_string, '%Y-%m-%d')
+        return True
+    except ValueError:
+        return False
+
+
+def validate_employer_data(data):
+    if 'employer_name' in data and (not data['employer_name'] or len(data['employer_name']) > 255):
+        return False, "Invalid employer name."
+
+    if 'employer_addr_line_1' in data and (not data['employer_addr_line_1'] or len(data['employer_addr_line_1']) > 255):
+        return False, "Invalid address line 1."
+
+    if 'employer_addr_line_2' in data and len(data['employer_addr_line_2']) > 255:
+        return False, "Invalid address line 2."
+
+    if 'employer_addr_city' in data and (not data['employer_addr_city'] or len(data['employer_addr_city']) > 255):
+        return False, "Invalid city name."
+
+    if 'employer_addr_state' in data and (not data['employer_addr_state'] or len(data['employer_addr_state']) > 255):
+        return False, "Invalid state name."
+
+    if 'employer_addr_zip_code' in data and (not data['employer_addr_zip_code'] or len(data['employer_addr_zip_code']) > 255):
+        return False, "Invalid zip code."
+
+    if 'employer_founded_date' in data and (not validate_date(data['employer_founded_date'])):
+        return False, "Invalid founded date."
+
+    if 'employer_dissolved_date' in data and data['employer_dissolved_date'] and not validate_date(data['employer_dissolved_date']):
+        return False, "Invalid dissolved date."
+
+    if 'employer_bankruptcy_date' in data and data['employer_bankruptcy_date'] and not validate_date(data['employer_bankruptcy_date']):
+        return False, "Invalid bankruptcy date."
+
+    if 'employer_industry_sector_code' in data and not isinstance(data['employer_industry_sector_code'], int):
+        return False, "Invalid industry sector code."
+
+    if 'employer_status' in data and (not data['employer_status'] or len(data['employer_status']) > 255):
+        return False, "Invalid employer status."
+
+    if 'employer_legal_status' in data and (not data['employer_legal_status'] or len(data['employer_legal_status']) > 255):
+        return False, "Invalid legal status."
+
+    return True, ""
+
+
 @application.route('/employer', methods=['PATCH'])
 @admin_required()
 def update_employer():
-    # TODO: implement this route
-    return error_response("Server reached but route not implemented yet", 400)
+    try:
+        data = request.json
+        employer_id = data.get('employer_id')
+
+        if not employer_id:
+            return error_response("Employer ID is required", 400)
+
+        is_valid, validation_message = validate_employer_data(data)
+        if not is_valid:
+            return error_response(validation_message, 400)
+
+        employer = Employer.query.get(employer_id)
+        if not employer:
+            return error_response("Employer not found", 404)
+
+        if 'employer_name' in data:
+            employer.employer_name = data['employer_name']
+        if 'employer_addr_line_1' in data:
+            employer.employer_addr_line_1 = data['employer_addr_line_1']
+        if 'employer_addr_line_2' in data:
+            employer.employer_addr_line_2 = data['employer_addr_line_2']
+        if 'employer_addr_city' in data:
+            employer.employer_addr_city = data['employer_addr_city']
+        if 'employer_addr_state' in data:
+            employer.employer_addr_state = data['employer_addr_state']
+        if 'employer_addr_zip_code' in data:
+            employer.employer_addr_zip_code = data['employer_addr_zip_code']
+        if 'employer_founded_date' in data:
+            employer.employer_founded_date = data['employer_founded_date']
+        if 'employer_dissolved_date' in data:
+            employer.employer_dissolved_date = data['employer_dissolved_date']
+        if 'employer_bankruptcy_date' in data:
+            employer.employer_bankruptcy_date = data['employer_bankruptcy_date']
+        if 'employer_industry_sector_code' in data:
+            employer.employer_industry_sector_code = data['employer_industry_sector_code']
+        if 'employer_status' in data:
+            employer.employer_status = data['employer_status']
+        if 'employer_legal_status' in data:
+            employer.employer_legal_status = data['employer_legal_status']
+
+        db.session.commit()
+
+        updated_employer_info = {
+            "employer_id": employer.employer_id,
+            "employer_name": employer.employer_name,
+            "employer_addr_line_1": employer.employer_addr_line_1,
+            "employer_addr_line_2": employer.employer_addr_line_2,
+            "employer_addr_city": employer.employer_addr_city,
+            "employer_addr_state": employer.employer_addr_state,
+            "employer_addr_zip_code": employer.employer_addr_zip_code,
+            "employer_founded_date": employer.employer_founded_date,
+            "employer_dissolved_date": employer.employer_dissolved_date,
+            "employer_bankruptcy_date": employer.employer_bankruptcy_date,
+            "employer_industry_sector_code": employer.employer_industry_sector_code,
+            "employer_status": employer.employer_status,
+            "employer_legal_status": employer.employer_legal_status
+        }
+
+        return jsonify(updated_employer_info), 200
+    except Exception as e:
+        return error_response(str(e), 500)
