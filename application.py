@@ -723,3 +723,26 @@ def grant_admin():
 
     except EmailSendingError as e:
         return error_response(str(e), 500)
+
+
+@application.route('/employer-relation/delete', methods=['DELETE'])
+@jwt_required()
+def delete_employer_relation():
+    try:
+        data = request.json
+        employer_relation_id = data.get("employer_relation_id")
+
+        if not employer_relation_id:
+            return error_response("Employer relation ID is required", 400)
+
+        employer_relation = EmployerRelation.query.get(employer_relation_id)
+        if not employer_relation:
+            return error_response("Employer relation not found", 404)
+
+        db.session.delete(employer_relation)
+        db.session.commit()
+
+        return success_response("Employer relation successfully deleted", 200)
+    except Exception as e:
+        return error_response(str(e), 500)
+
