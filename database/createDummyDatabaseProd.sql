@@ -186,7 +186,9 @@ VALUES
     ("Not-Great-Mart", "2468 Radio Rd", NULL, "Everycity", "AR", "66666", "2006-08-16", NULL, 45, "Active", "Co."),
     ("We Own Everything", "987 Corporate Blvd", NULL, "Anytown", "AR", "99999", "2001-09-19", "2012-07-27", 32, "Spun-off", "Co."),
     ("We Only Own Half the Stuff", "147 Colony Cir", NULL, "Anytown", "AR", "99999", "2012-07-28", NULL, 32, "Active", "Co."),
-    ("We Own the Rest", "456 Split Dr", NULL, "Somecity", "AR", "88888", "2012-07-28", NULL, 32, "Active", "Co.");
+    ("We Own the Rest", "456 Split Dr", NULL, "Somecity", "AR", "88888", "2012-07-28", NULL, 32, "Active", "Co."),
+    ("The Tooth Hurts", "123 Dumb Ln", "Ste C", "Somecity", "AR", "88888", "2014-03-01", NULL, 62, "Active", "LLP"),
+    ("Lizzie Borden's Flowers & Boutique", "456 Seriously Dr", NULL, "Anytown", "AR", "99999", "2000-10-14", NULL, 45, "Active", "Co.");
 
 -- Create and insert employer-relation record.
 INSERT INTO backend_prod.employer_relations (
