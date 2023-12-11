@@ -366,6 +366,7 @@ def login_user():
 
 
 @application.route('/employer/name-change', methods=['POST'])
+@admin_required()
 def employer_name_change():
     try:
         # Parse the input data
@@ -452,8 +453,10 @@ def get_employer_graph():
                     parent_employer = Employer.query.get(parent_relation.parent_employer_id)
                     if parent_employer.employer_id not in employer_ids:
                         add_employer(parent_employer)
-                        mapping.add((parent_relation.employer_relation_id, parent_employer.employer_id, child_employer.employer_id,
-                                     parent_relation.employer_relation_type, parent_relation.employer_relation_start_date))
+                        mapping.add((parent_relation.employer_relation_id, parent_employer.employer_id,
+                                     child_employer.employer_id,
+                                     parent_relation.employer_relation_type,
+                                     parent_relation.employer_relation_start_date))
                         find_parents(parent_employer)
                         find_children(parent_employer)
 
@@ -463,8 +466,10 @@ def get_employer_graph():
                     child_employer = Employer.query.get(child_relation.child_employer_id)
                     if child_employer.employer_id not in employer_ids:
                         add_employer(child_employer)
-                        mapping.add((child_relation.employer_relation_id, parent_employer.employer_id, child_employer.employer_id,
-                                     child_relation.employer_relation_type, child_relation.employer_relation_start_date))
+                        mapping.add((child_relation.employer_relation_id, parent_employer.employer_id,
+                                     child_employer.employer_id,
+                                     child_relation.employer_relation_type,
+                                     child_relation.employer_relation_start_date))
                         find_children(child_employer)
                         find_parents(child_employer)
 
@@ -473,7 +478,8 @@ def get_employer_graph():
             find_children(employer)
 
             mapping_list = [
-                {"id": str(relation_id), "source": str(parent), "target": str(child), "relationType": relation_type, "startDate": relation_start_date} for
+                {"id": str(relation_id), "source": str(parent), "target": str(child), "relationType": relation_type,
+                 "startDate": relation_start_date} for
                 relation_id, parent, child, relation_type, relation_start_date in mapping
             ]
 
@@ -560,16 +566,19 @@ def validate_employer_data(data):
     if 'employer_addr_state' in data and (not data['employer_addr_state'] or len(data['employer_addr_state']) > 255):
         return False, "Invalid state name."
 
-    if 'employer_addr_zip_code' in data and (not data['employer_addr_zip_code'] or len(data['employer_addr_zip_code']) > 255):
+    if 'employer_addr_zip_code' in data and (
+            not data['employer_addr_zip_code'] or len(data['employer_addr_zip_code']) > 255):
         return False, "Invalid zip code."
 
     if 'employer_founded_date' in data and (not validate_date(data['employer_founded_date'])):
         return False, "Invalid founded date."
 
-    if 'employer_dissolved_date' in data and data['employer_dissolved_date'] and not validate_date(data['employer_dissolved_date']):
+    if 'employer_dissolved_date' in data and data['employer_dissolved_date'] and not validate_date(
+            data['employer_dissolved_date']):
         return False, "Invalid dissolved date."
 
-    if 'employer_bankruptcy_date' in data and data['employer_bankruptcy_date'] and not validate_date(data['employer_bankruptcy_date']):
+    if 'employer_bankruptcy_date' in data and data['employer_bankruptcy_date'] and not validate_date(
+            data['employer_bankruptcy_date']):
         return False, "Invalid bankruptcy date."
 
     if 'employer_industry_sector_code' in data and not isinstance(data['employer_industry_sector_code'], int):
@@ -578,7 +587,8 @@ def validate_employer_data(data):
     if 'employer_status' in data and (not data['employer_status'] or len(data['employer_status']) > 255):
         return False, "Invalid employer status."
 
-    if 'employer_legal_status' in data and (not data['employer_legal_status'] or len(data['employer_legal_status']) > 255):
+    if 'employer_legal_status' in data and (
+            not data['employer_legal_status'] or len(data['employer_legal_status']) > 255):
         return False, "Invalid legal status."
 
     return True, ""
@@ -651,6 +661,7 @@ def update_employer():
 
 
 @application.route('/employer/split', methods=['POST'])
+@admin_required()
 def split_employers():
     try:
         # Parse the input data
@@ -695,6 +706,7 @@ def split_employers():
 
 
 @application.route('/employer/merge', methods=['POST'])
+@admin_required()
 def merge_employers():
     try:
         # Parse the input data
@@ -834,7 +846,7 @@ def grant_admin():
 
 
 @application.route('/employer/delete', methods=['DELETE'])
-@jwt_required()
+@admin_required()
 def delete_employer():
     try:
         data = request.json
@@ -862,4 +874,3 @@ def delete_employer():
         return success_response("Employer successfully deleted", 200)
     except Exception as e:
         return error_response(str(e), 500)
-
