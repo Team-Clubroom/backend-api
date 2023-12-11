@@ -135,21 +135,22 @@ Returns a list of employers
 ----------------------------------------------------
 
 ```
-Request: { employer_name: string }
+Request: { employer_id: string }
 ```
 
 ```
 Response:
 {
     data: {
-        nodes: {
-            "<employer_id>": {
+        nodes: [
+            {
+                id: string,
                 name: string,
                 estDate: string,
                 position: { x: number, y: number }
             },
             (...)
-        },
+        ],
         edges: [
             {
                 id: string,
@@ -165,6 +166,68 @@ Response:
 ```
 
 Returns a tree which includes the searched employer.
+
+## Employer relations routes
+
+/employer/merge ['POST'] @admin
+----------------------------------------------------
+
+```
+Request: 
+{
+    company_a_id: string,
+    company_b_id: string,
+    company_c_id: string,
+    employer_relation_start_date: string,
+}
+```
+
+```
+Response:
+{
+    message: "Merge successful"
+}
+```
+
+/employer/split ['POST'] @admin
+----------------------------------------------------
+
+```
+Request: 
+{
+    company_a_id: string,
+    company_b_id: string,
+    company_c_id: string,
+    employer_relation_start_date: string,
+}
+```
+
+```
+Response:
+{
+    message: "Split successful"
+}
+```
+
+/employer/name-change ['POST'] @admin
+----------------------------------------------------
+
+```
+Request: 
+{
+    old_employer_id: string,
+    new_employer_name: string,
+    name_change_effective_date: string,
+}
+```
+
+```
+Response:
+{
+    data: employer_object, // reference '/employers' for structure
+    message: "Name change successful",
+}
+```
 
 ## Email service
 
