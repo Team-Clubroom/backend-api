@@ -453,7 +453,7 @@ def get_employer_graph():
                     if parent_employer.employer_id not in employer_ids:
                         add_employer(parent_employer)
                         mapping.add((parent_relation.employer_relation_id, parent_employer.employer_id, child_employer.employer_id,
-                                     parent_relation.employer_relation_type))
+                                     parent_relation.employer_relation_type, parent_relation.employer_relation_start_date))
                         find_parents(parent_employer)
                         find_children(parent_employer)
 
@@ -464,7 +464,7 @@ def get_employer_graph():
                     if child_employer.employer_id not in employer_ids:
                         add_employer(child_employer)
                         mapping.add((child_relation.employer_relation_id, parent_employer.employer_id, child_employer.employer_id,
-                                     child_relation.employer_relation_type))
+                                     child_relation.employer_relation_type, child_relation.employer_relation_start_date))
                         find_children(child_employer)
                         find_parents(child_employer)
 
@@ -473,8 +473,8 @@ def get_employer_graph():
             find_children(employer)
 
             mapping_list = [
-                {"id": str(relation_id), "source": str(parent), "target": str(child), "relationType": relation_type} for
-                relation_id, parent, child, relation_type in mapping
+                {"id": str(relation_id), "source": str(parent), "target": str(child), "relationType": relation_type, "startDate": relation_start_date} for
+                relation_id, parent, child, relation_type, relation_start_date in mapping
             ]
 
             return success_response("Employer graph fetched successfully", 200, {
